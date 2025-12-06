@@ -14,9 +14,10 @@ interface SellerDashboardProps {
   onClose: () => void;
   products: Product[];
   onAddProduct: () => void;
+  onCompanyProfile: () => void;
 }
 
-export function SellerDashboard({ isOpen, onClose, products, onAddProduct }: SellerDashboardProps) {
+export function SellerDashboard({ isOpen, onClose, products, onAddProduct, onCompanyProfile }: SellerDashboardProps) {
   if (!isOpen) return null;
 
   return (
@@ -33,7 +34,13 @@ export function SellerDashboard({ isOpen, onClose, products, onAddProduct }: Sel
             </button>
           </div>
 
-          <div className="mb-6">
+          <div className="mb-6 flex gap-4">
+            <button
+              onClick={onCompanyProfile}
+              className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition flex items-center gap-2"
+            >
+              Профиль компании
+            </button>
             <button
               onClick={onAddProduct}
               className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition flex items-center gap-2"

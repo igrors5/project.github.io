@@ -5,7 +5,7 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLogin: (email: string, password: string) => void;
-  onSignup: (email: string, password: string, name: string, userType: 'buyer' | 'seller') => void;
+  onSignup: (email: string, password: string, name: string) => void;
 }
 
 export function AuthModal({ isOpen, onClose, onLogin, onSignup }: AuthModalProps) {
@@ -13,7 +13,6 @@ export function AuthModal({ isOpen, onClose, onLogin, onSignup }: AuthModalProps
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [userType, setUserType] = useState<'buyer' | 'seller'>('buyer');
   const [nameError, setNameError] = useState<string>('');
 
   if (!isOpen) return null;
@@ -37,7 +36,7 @@ export function AuthModal({ isOpen, onClose, onLogin, onSignup }: AuthModalProps
       onLogin(email, password);
     } else {
       if (validateName(name)) {
-        onSignup(email, password, name.trim(), userType);
+        onSignup(email, password, name.trim());
       }
     }
   };
@@ -46,7 +45,6 @@ export function AuthModal({ isOpen, onClose, onLogin, onSignup }: AuthModalProps
     setEmail('');
     setPassword('');
     setName('');
-    setUserType('buyer');
     setNameError('');
   };
 
@@ -133,35 +131,6 @@ export function AuthModal({ isOpen, onClose, onLogin, onSignup }: AuthModalProps
               />
             </div>
 
-            {mode === 'signup' && (
-              <div>
-                <label className="block text-gray-700 mb-2">Тип аккаунта</label>
-                <div className="space-y-2">
-                  <label className="flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      name="userType"
-                      value="buyer"
-                      checked={userType === 'buyer'}
-                      onChange={(e) => setUserType(e.target.value as 'buyer' | 'seller')}
-                      className="mr-2"
-                    />
-                    <span className="text-gray-700">Покупатель</span>
-                  </label>
-                  <label className="flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      name="userType"
-                      value="seller"
-                      checked={userType === 'seller'}
-                      onChange={(e) => setUserType(e.target.value as 'buyer' | 'seller')}
-                      className="mr-2"
-                    />
-                    <span className="text-gray-700">Производитель</span>
-                  </label>
-                </div>
-              </div>
-            )}
 
             <button
               type="submit"

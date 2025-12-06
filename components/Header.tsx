@@ -5,7 +5,7 @@ interface HeaderProps {
   cartCount: number;
   onCartClick: () => void;
   onSearchClick: () => void;
-  user: { name: string; email: string; userType: string } | null;
+  user: { name: string; email: string } | null;
   onAuthClick: () => void;
   onProfileClick?: () => void;
   onLogout?: () => void;
@@ -65,11 +65,8 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
                   <div className="absolute right-0 top-12 bg-white shadow-lg rounded-lg py-2 min-w-[200px] z-50">
                     <div className="px-4 py-2 border-b">
                       <p className="text-sm text-gray-600">{user.email}</p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {user.userType === 'seller' ? 'Производитель' : 'Покупатель'}
-                      </p>
                     </div>
-                    {user.userType === 'seller' && onProfileClick && (
+                    {onProfileClick && (
                       <button
                         onClick={() => {
                           onProfileClick();

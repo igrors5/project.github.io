@@ -1,13 +1,16 @@
 import { projectId, publicAnonKey } from './supabase/info';
+import { initDB, userDB, productDB, sessionDB, User, Product } from './localDB';
 
 const supabaseUrl = `https://${projectId}.supabase.co`;
 const API_BASE = `${supabaseUrl}/functions/v1/make-server-65112a46`;
+
+// Инициализация БД при первом импорте
+initDB();
 
 interface SignupData {
   email: string;
   password: string;
   name: string;
-  userType: 'buyer' | 'seller';
 }
 
 interface LoginData {
@@ -23,86 +26,129 @@ interface ProductData {
   description?: string;
 }
 
+// Генерация токена
+function generateToken(): string {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
 export const api = {
   // Auth
   async signup(data: SignupData) {
-    const response = await fetch(`${API_BASE}/signup`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${publicAnonKey}`,
-      },
-      body: JSON.stringify(data),
-    });
+    try {
+      // Проверка существующего пользователя
+      const existingUser = userDB.getByEmail(data.email);
+      if (existingUser) {
+        return { error: 'Пользователь с таким email уже существует' };
+      }
 
-    return response.json();
+      // Создание пользователя
+      const user = userDB.create({
+        email: data.email,
+        name: data.name,
+        password: data.password, // В реальном приложении должен быть хеш
+      });
+
+      return { success: true, user: { id: user.id, email: user.email, name: user.name } };
+    } catch (error) {
+      return { error: 'Ошибка при регистрации' };
+    }
   },
 
   async login(data: LoginData) {
-    const response = await fetch(`${API_BASE}/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${publicAnonKey}`,
-      },
-      body: JSON.stringify(data),
-    });
+    try {
+      const user = userDB.getByEmail(data.email);
+      if (!user || user.password !== data.password) {
+        return { error: 'Неверный email или пароль' };
+      }
 
-    return response.json();
+      const token = generateToken();
+      sessionDB.create(user.id, token);
+
+      return {
+        success: true,
+        session: {
+          access_token: token,
+          user: { id: user.id, email: user.email, name: user.name },
+        },
+      };
+    } catch (error) {
+      return { error: 'Ошибка при входе' };
+    }
   },
 
   async logout(accessToken: string) {
-    const response = await fetch(`${API_BASE}/logout`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    });
-
-    return response.json();
+    try {
+      sessionDB.delete(accessToken);
+      return { success: true };
+    } catch (error) {
+      return { error: 'Ошибка при выходе' };
+    }
   },
 
   async getProfile(accessToken: string) {
-    const response = await fetch(`${API_BASE}/profile`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    });
+    try {
+      const session = sessionDB.getByToken(accessToken);
+      if (!session) {
+        return { error: 'Недействительная сессия' };
+      }
 
-    return response.json();
+      const user = userDB.getById(session.userId);
+      if (!user) {
+        return { error: 'Пользователь не найден' };
+      }
+
+      return {
+        success: true,
+        user: { id: user.id, email: user.email, name: user.name },
+      };
+    } catch (error) {
+      return { error: 'Ошибка при получении профиля' };
+    }
   },
 
   // Products
   async getProducts() {
-    const response = await fetch(`${API_BASE}/products`, {
-      headers: {
-        'Authorization': `Bearer ${publicAnonKey}`,
-      },
-    });
-
-    return response.json();
+    try {
+      const products = productDB.getAll();
+      return { success: true, products };
+    } catch (error) {
+      return { error: 'Ошибка при загрузке товаров', products: [] };
+    }
   },
 
   async addProduct(data: ProductData, accessToken: string) {
-    const response = await fetch(`${API_BASE}/products`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(data),
-    });
+    try {
+      const session = sessionDB.getByToken(accessToken);
+      if (!session) {
+        return { error: 'Недействительная сессия' };
+      }
 
-    return response.json();
+      const product = productDB.create({
+        name: data.name,
+        price: data.price,
+        image: data.image || '',
+        category: data.category,
+        description: data.description,
+        sellerId: session.userId,
+      });
+
+      return { success: true, product };
+    } catch (error) {
+      return { error: 'Ошибка при добавлении товара' };
+    }
   },
 
   async getSellerProducts(accessToken: string) {
-    const response = await fetch(`${API_BASE}/seller/products`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    });
+    try {
+      const session = sessionDB.getByToken(accessToken);
+      if (!session) {
+        return { error: 'Недействительная сессия', products: [] };
+      }
 
-    return response.json();
+      const products = productDB.getBySeller(session.userId);
+      return { success: true, products };
+    } catch (error) {
+      return { error: 'Ошибка при загрузке товаров', products: [] };
+    }
   },
 };

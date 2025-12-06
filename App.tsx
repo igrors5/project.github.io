@@ -10,6 +10,7 @@ import { ToastContainer } from './components/Toast';
 import { AuthModal } from './components/AuthModal';
 import { AddProductModal } from './components/AddProductModal';
 import { SellerDashboard } from './components/SellerDashboard';
+import { CompanyProfile } from './components/CompanyProfile';
 import { Chatbot } from './components/Chatbot';
 import { Award, Truck, BadgeCheck, Phone } from './components/Icons';
 import { useState, useEffect } from 'react';
@@ -123,29 +124,25 @@ const initialProducts = [
   },
 ];
 
-const categories = [
+const categoryDefinitions = [
   {
     id: 1,
     name: 'Традиционные ремесла',
-    itemCount: 4,
     image: 'https://images.unsplash.com/photo-1596626417050-39c7f6ddd2c9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aWNrZXIlMjBiYXNrZXQlMjBoYW5kbWFkZXxlbnwxfHx8fDE3NjQ4NTUxODl8MA&ixlib=rb-4.1.0&q=80&w=1080'
   },
   {
     id: 2,
     name: 'Украшения',
-    itemCount: 3,
     image: 'https://images.unsplash.com/photo-1656109801168-699967cf3ba9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzaWx2ZXIlMjBlYXJyaW5ncyUyMGpld2Vscnl8ZW58MXx8fHwxNzY0NzU3MTY3fDA&ixlib=rb-4.1.0&q=80&w=1080'
   },
   {
     id: 3,
     name: 'Одежда и текстиль',
-    itemCount: 5,
     image: 'https://images.unsplash.com/photo-1763400126795-d83e07d3449e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cmFkaXRpb25hbCUyMHRleHRpbGUlMjBlbWJyb2lkZXJ5fGVufDF8fHx8MTc2NDg1NTE4OHww&ixlib=rb-4.1.0&q=80&w=1080'
   },
   {
     id: 4,
     name: 'Деревянные изделия',
-    itemCount: 3,
     image: 'https://images.unsplash.com/photo-1583041475142-cfd72e558188?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b29kZW4lMjBjYXJ2ZWQlMjBib3h8ZW58MXx8fHwxNzY0ODU1MTg4fDA&ixlib=rb-4.1.0&q=80&w=1080'
   },
 ];
@@ -195,7 +192,6 @@ interface User {
   id: string;
   email: string;
   name: string;
-  userType: 'buyer' | 'seller';
 }
 
 let toastIdCounter = 0;
@@ -214,6 +210,7 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [isSellerDashboardOpen, setIsSellerDashboardOpen] = useState(false);
+  const [isCompanyProfileOpen, setIsCompanyProfileOpen] = useState(false);
   const [allProducts, setAllProducts] = useState(initialProducts);
   const [sellerProducts, setSellerProducts] = useState<any[]>([]);
 
@@ -222,23 +219,21 @@ export default function App() {
     loadProducts();
   }, []);
 
-  // Load seller products when user is seller
+  // Load seller products when user is logged in
   useEffect(() => {
-    if (user?.userType === 'seller' && accessToken) {
+    if (user && accessToken) {
       loadSellerProducts();
     }
   }, [user, accessToken]);
 
   const loadProducts = async () => {
     const response = await api.getProducts();
-    if (response.success && response.products.length > 0) {
-      // Combine initial products with server products
-      const combined = [...initialProducts, ...response.products];
-      // Remove duplicates by id
-      const unique = combined.filter((product, index, self) =>
-        index === self.findIndex((p) => p.id === product.id)
-      );
-      setAllProducts(unique);
+    if (response.success && response.products) {
+      // Загружаем товары из локальной БД
+      setAllProducts(response.products);
+    } else {
+      // Fallback на начальные товары если БД пуста
+      setAllProducts(initialProducts);
     }
   };
 
@@ -283,8 +278,8 @@ export default function App() {
     }
   };
 
-  const handleSignup = async (email: string, password: string, name: string, userType: 'buyer' | 'seller') => {
-    const response = await api.signup({ email, password, name, userType });
+  const handleSignup = async (email: string, password: string, name: string) => {
+    const response = await api.signup({ email, password, name, userType: 'seller' });
     if (response.error) {
       toast.error(response.error);
       return;
@@ -327,8 +322,8 @@ export default function App() {
     if (response.success) {
       toast.success('Товар успешно добавлен!');
       setIsAddProductModalOpen(false);
-      loadProducts();
-      loadSellerProducts();
+      await loadProducts();
+      await loadSellerProducts();
     }
   };
 
@@ -415,17 +410,19 @@ export default function App() {
   };
 
   const handleProfileClick = () => {
-    if (user?.userType === 'seller') {
-      setIsSellerDashboardOpen(true);
-    } else {
-      toast.info('Профиль покупателя в разработке');
-    }
+    setIsSellerDashboardOpen(true);
   };
 
   // Filter products by selected category
   const filteredProducts = selectedCategory
     ? allProducts.filter(product => product.category === selectedCategory)
     : allProducts;
+
+  // Calculate categories with actual item counts
+  const categories = categoryDefinitions.map(category => ({
+    ...category,
+    itemCount: allProducts.filter(product => product.category === category.name).length
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -640,6 +637,16 @@ export default function App() {
           setIsSellerDashboardOpen(false);
           setIsAddProductModalOpen(true);
         }}
+        onCompanyProfile={() => {
+          setIsSellerDashboardOpen(false);
+          setIsCompanyProfileOpen(true);
+        }}
+      />
+
+      <CompanyProfile
+        isOpen={isCompanyProfileOpen}
+        onClose={() => setIsCompanyProfileOpen(false)}
+        accessToken={accessToken}
       />
 
       <Chatbot />
