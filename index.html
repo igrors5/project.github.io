@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Якутский маркетплейс</title>
+    <meta name="description" content="Традиционные якутские товары ручной работы">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f9fafb;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4f46e5;
+        }
+        
+        .hero {
+            text-align: center;
+            padding: 4rem 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-bottom: 3rem;
+            border-radius: 10px;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .content h2 {
+            color: #4f46e5;
+            margin-bottom: 1rem;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .feature {
+            text-align: center;
+            padding: 1.5rem;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+        
+        .feature h3 {
+            color: #4f46e5;
+            margin-bottom: 0.5rem;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: #666;
+            margin-top: 3rem;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">Якутский Маркетплейс</div>
+        </nav>
+    </header>
+    
+    <div class="container">
+        <div class="hero">
+            <h1>Добро пожаловать!</h1>
+            <p>Традиционные якутские товары ручной работы</p>
+        </div>
+        
+        <div class="content">
+            <h2>О нашем маркетплейсе</h2>
+            <p>Мы предлагаем аутентичные товары, изготовленные местными мастерами Якутии. От традиционной одежды до уникальных украшений - у нас вы найдете все, что нужно для знакомства с богатой культурой этого региона.</p>
+        </div>
+        
+        <div class="content">
+            <h2>Наши преимущества</h2>
+            <div class="features">
+                <div class="feature">
+                    <h3>🎨 Аутентичные товары</h3>
+                    <p>Все товары изготовлены местными мастерами</p>
+                </div>
+                <div class="feature">
+                    <h3>🚚 Доставка</h3>
+                    <p>Доставка по всей республике</p>
+                </div>
+                <div class="feature">
+                    <h3>✅ Гарантия качества</h3>
+                    <p>Проверка каждого изделия</p>
+                </div>
+                <div class="feature">
+                    <h3>📞 Поддержка 24/7</h3>
+                    <p>Всегда готовы помочь</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2024 Якутский Маркетплейс. Все права защищены.</p>
+    </footer>
+</body>
+</html>
+
