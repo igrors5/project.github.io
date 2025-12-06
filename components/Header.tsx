@@ -96,8 +96,12 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
               </div>
             ) : (
               <button
-                onClick={onAuthClick}
-                className="text-gray-700 hover:text-indigo-600 transition"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onAuthClick();
+                }}
+                className="text-gray-700 hover:text-indigo-600 transition px-3 py-2"
               >
                 Войти
               </button>
@@ -161,8 +165,12 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
                   </div>
                 ) : (
                   <button
-                    onClick={onAuthClick}
-                    className="text-gray-700 hover:text-indigo-600 transition"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onAuthClick();
+                    }}
+                    className="text-gray-700 hover:text-indigo-600 transition px-3 py-2"
                   >
                     Войти
                   </button>

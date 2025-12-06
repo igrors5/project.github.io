@@ -14,15 +14,31 @@ export function AuthModal({ isOpen, onClose, onLogin, onSignup }: AuthModalProps
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [userType, setUserType] = useState<'buyer' | 'seller'>('buyer');
+  const [nameError, setNameError] = useState<string>('');
 
   if (!isOpen) return null;
+
+  const validateName = (nameValue: string): boolean => {
+    if (nameValue.trim().length < 2) {
+      setNameError('Имя должно содержать минимум 2 символа');
+      return false;
+    }
+    if (nameValue.trim().length > 16) {
+      setNameError('Имя не должно превышать 16 символов');
+      return false;
+    }
+    setNameError('');
+    return true;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (mode === 'login') {
       onLogin(email, password);
     } else {
-      onSignup(email, password, name, userType);
+      if (validateName(name)) {
+        onSignup(email, password, name.trim(), userType);
+      }
     }
   };
 
@@ -31,6 +47,7 @@ export function AuthModal({ isOpen, onClose, onLogin, onSignup }: AuthModalProps
     setPassword('');
     setName('');
     setUserType('buyer');
+    setNameError('');
   };
 
   const handleClose = () => {
@@ -44,8 +61,8 @@ export function AuthModal({ isOpen, onClose, onLogin, onSignup }: AuthModalProps
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4" onClick={handleClose}>
+      <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-gray-900">
@@ -66,12 +83,30 @@ export function AuthModal({ isOpen, onClose, onLogin, onSignup }: AuthModalProps
                 <input
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (nameError) {
+                      validateName(e.target.value);
+                    }
+                  }}
+                  onBlur={() => validateName(name)}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                    nameError 
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'border-gray-300 focus:ring-indigo-500'
+                  }`}
                   required
                   minLength={2}
-                  maxLength={50}
+                  maxLength={16}
                 />
+                {nameError && (
+                  <p className="mt-1 text-sm text-red-500">{nameError}</p>
+                )}
+                {!nameError && name.length > 0 && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    {name.length}/16 символов
+                  </p>
+                )}
               </div>
             )}
 
