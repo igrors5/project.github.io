@@ -16,7 +16,8 @@ export interface Product {
   category: string;
   description?: string;
   sellerId?: string;
-  createdAt: string;
+  ulys?: string; // Якутский улус
+  createdAt?: string;
 }
 
 const DB_KEYS = {

@@ -24,6 +24,7 @@ interface ProductData {
   image?: string;
   category: string;
   description?: string;
+  ulys?: string;
 }
 
 // Генерация токена
@@ -129,6 +130,7 @@ export const api = {
         image: data.image || '',
         category: data.category,
         description: data.description,
+        ulys: data.ulys,
         sellerId: session.userId,
       });
 

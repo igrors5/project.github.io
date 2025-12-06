@@ -11,118 +11,12 @@ import { AuthModal } from './components/AuthModal';
 import { AddProductModal } from './components/AddProductModal';
 import { SellerDashboard } from './components/SellerDashboard';
 import { CompanyProfile } from './components/CompanyProfile';
+import { ProductFilters } from './components/ProductFilters';
 import { Chatbot } from './components/Chatbot';
 import { Award, Truck, BadgeCheck, Phone } from './components/Icons';
 import { useState, useEffect } from 'react';
 import { api } from './utils/api';
-
-const initialProducts = [
-  {
-    id: 2,
-    name: 'Зимняя меховая одежда',
-    price: 25000,
-    image: 'https://images.unsplash.com/photo-1551734412-cbc8e1904805?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmdXIlMjB3aW50ZXIlMjBjb2F0fGVufDF8fHx8MTc2NDg1NTE4OHww&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'Одежда и текстиль'
-  },
-  {
-    id: 3,
-    name: 'Аал-Луук Мас',
-    price: 5000,
-    image: 'https://images.unsplash.com/photo-1583041475142-cfd72e558188?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b29kZW4lMjBjYXJ2ZWQlMjBib3h8ZW58MXx8fHwxNzY0ODU1MTg4fDA&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'Деревянные изделия'
-  },
-  {
-    id: 4,
-    name: 'Традиционные текстильные изделия',
-    price: 6500,
-    image: 'https://images.unsplash.com/photo-1763400126795-d83e07d3449e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cmFkaXRpb25hbCUyMHRleHRpbGUlMjBlbWJyb2lkZXJ5fGVufDF8fHx8MTc2NDg1NTE4OHww&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'Одежда и текстиль'
-  },
-  {
-    id: 5,
-    name: 'Серебряные серьги с узорами',
-    price: 5500,
-    image: 'https://images.unsplash.com/photo-1656109801168-699967cf3ba9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzaWx2ZXIlMjBlYXJyaW5ncyUyMGpld2Vscnl8ZW58MXx8fHwxNzY0NzU3MTY3fDA&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'Украшения'
-  },
-  {
-    id: 6,
-    name: 'Меховая шапка-ушанка',
-    price: 8000,
-    image: 'https://images.unsplash.com/photo-1722110683865-7b494bde6bfd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmdXIlMjBoYXQlMjB1c2hhbmthfGVufDF8fHx8MTc2NDg1NTE4OXww&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'Одежда и текстиль'
-  },
-  {
-    id: 7,
-    name: 'Якутский нож',
-    price: 4500,
-    image: 'https://images.unsplash.com/photo-1631561381314-588b8a5f1070?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b29kZW4lMjBqZXdlbHJ5JTIwYm94fGVufDF8fHx8MTc2NDg1NTE4OXww&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'Традиционные ремесла'
-  },
-  {
-    id: 8,
-    name: 'Плетеная корзина',
-    price: 3500,
-    image: 'https://images.unsplash.com/photo-1596626417050-39c7f6ddd2c9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aWNrZXIlMjBiYXNrZXQlMjBoYW5kbWFkZXxlbnwxfHx8fDE3NjQ4NTUxODl8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'Традиционные ремесла'
-  },
-  {
-    id: 9,
-    name: 'Якутский нож с резной ручкой',
-    price: 15000,
-    image: 'https://images.unsplash.com/photo-1588597574944-5e581eeef359?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxodW50aW5nJTIwa25pZmUlMjBjYXJ2ZWR8ZW58MXx8fHwxNzY0ODU1MTkwfDA&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'Традиционные ремесла'
-  },
-  {
-    id: 10,
-    name: 'Браслет с национальным орнаментом',
-    price: 6800,
-    image: 'https://images.unsplash.com/photo-1758995115643-1e8348bfde39?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicmFjZWxldCUyMG9ybmFtZW50JTIwamV3ZWxyeXxlbnwxfHx8fDE3NjQ4NTUxOTB8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'Украшения'
-  },
-  {
-    id: 11,
-    name: 'Деревянная ложка с резьбой',
-    price: 2500,
-    image: 'https://images.unsplash.com/photo-1616782910751-d48be696d41c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b29kZW4lMjBzcG9vbiUyMGNhcnZlZHxlbnwxfHx8fDE3NjQ4NTUxOTF8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'Деревянные изделия'
-  },
-  {
-    id: 12,
-    name: 'Расшитая национальная рубаха',
-    price: 12000,
-    image: 'https://images.unsplash.com/photo-1763514796882-7c3cb168cfb3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cmFkaXRpb25hbCUyMGVtYnJvaWRlcmVkJTIwc2hpcnR8ZW58MXx8fHwxNzY0ODU1MTkxfDA&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'Одежда и текстиль'
-  },
-  {
-    id: 13,
-    name: 'Берестяная посуда',
-    price: 3800,
-    image: 'https://images.unsplash.com/photo-1610701596295-4dc5d6289214?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b29kZW4lMjBib3dsJTIwaGFuZGNyYWZ0fGVufDF8fHx8MTc2NDg0MzAyN3ww&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'Традиционные ремесла'
-  },
-  {
-    id: 14,
-    name: 'Кулон из бивня мамонта',
-    price: 18000,
-    image: 'https://images.unsplash.com/photo-1622675392349-82577942abce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwZW5kYW50JTIwbmVja2xhY2UlMjBpdm9yeXxlbnwxfHx8fDE3NjQ4NTUxOTJ8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'Украшения'
-  },
-  {
-    id: 15,
-    name: 'Деревянная статуэтка',
-    price: 9500,
-    image: 'https://images.unsplash.com/photo-1753016941650-07d98c95d81a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b29kZW4lMjBzdGF0dWUlMjBmaWd1cmluZXxlbnwxfHx8fDE3NjQ4NTUxOTJ8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'Деревянные изделия'
-  },
-  {
-    id: 16,
-    name: 'Вышитый платок',
-    price: 4200,
-    image: 'https://images.unsplash.com/photo-1764305066023-2c5acfddc10f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlbWJyb2lkZXJlZCUyMHNjYXJmJTIwdHJhZGl0aW9uYWx8ZW58MXx8fHwxNzY0ODU1MTkzfDA&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'Одежда и текстиль'
-  },
-];
+import { Product } from './utils/localDB';
 
 const categoryDefinitions = [
   {
@@ -201,8 +95,10 @@ export default function App() {
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<typeof initialProducts[0] | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedUlys, setSelectedUlys] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'none'>('none');
   const [email, setEmail] = useState('');
   const [toasts, setToasts] = useState<ToastType[]>([]);
   const [user, setUser] = useState<User | null>(null);
@@ -211,7 +107,7 @@ export default function App() {
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [isSellerDashboardOpen, setIsSellerDashboardOpen] = useState(false);
   const [isCompanyProfileOpen, setIsCompanyProfileOpen] = useState(false);
-  const [allProducts, setAllProducts] = useState(initialProducts);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [sellerProducts, setSellerProducts] = useState<any[]>([]);
 
   // Load products from server
@@ -232,8 +128,8 @@ export default function App() {
       // Загружаем товары из локальной БД
       setAllProducts(response.products);
     } else {
-      // Fallback на начальные товары если БД пуста
-      setAllProducts(initialProducts);
+      // Fallback на пустой массив если БД пуста
+      setAllProducts([]);
     }
   };
 
@@ -279,7 +175,7 @@ export default function App() {
   };
 
   const handleSignup = async (email: string, password: string, name: string) => {
-    const response = await api.signup({ email, password, name, userType: 'seller' });
+    const response = await api.signup({ email, password, name });
     if (response.error) {
       toast.error(response.error);
       return;
@@ -307,6 +203,7 @@ export default function App() {
     image: string;
     category: string;
     description: string;
+    ulys: string;
   }) => {
     if (!accessToken) {
       toast.error('Необходимо войти в систему');
@@ -327,7 +224,7 @@ export default function App() {
     }
   };
 
-  const addToCart = (product: typeof initialProducts[0], quantity: number = 1) => {
+  const addToCart = (product: Product, quantity: number = 1) => {
     setCartItems(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
@@ -375,7 +272,7 @@ export default function App() {
     }
   };
 
-  const handleProductClick = (product: typeof initialProducts[0]) => {
+  const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
   };
 
@@ -413,16 +310,81 @@ export default function App() {
     setIsSellerDashboardOpen(true);
   };
 
-  // Filter products by selected category
-  const filteredProducts = selectedCategory
-    ? allProducts.filter(product => product.category === selectedCategory)
-    : allProducts;
+  // Filter and sort products
+  let filteredProducts = allProducts;
+
+  // Фильтр по категории
+  if (selectedCategory) {
+    filteredProducts = filteredProducts.filter(product => product.category === selectedCategory);
+  }
+
+  // Фильтр по улусу
+  if (selectedUlys) {
+    filteredProducts = filteredProducts.filter(product => product.ulys === selectedUlys);
+  }
+
+  // Сортировка по дате
+  if (sortBy !== 'none') {
+    filteredProducts = [...filteredProducts].sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+  }
 
   // Calculate categories with actual item counts
   const categories = categoryDefinitions.map(category => ({
     ...category,
     itemCount: allProducts.filter(product => product.category === category.name).length
   }));
+
+  // Полный список улусов (из AddProductModal)
+  const allUluses = [
+    'Абыйский улус - Абый улууһа (административный центр п. Белая Гора)',
+    'Алданский район - Алдан улууһа (административный центр г. Алдан)',
+    'Аллаиховский улус - Аллайыаха улууhа (административный центр п. Чокурдах)',
+    'Амгинский улус - Амма улууһа (административный центр с. Амга)',
+    'Анабарский национальный (долгано-эвенкийский) улус - Анаабыр улууhа (административный центр с. Саскылах)',
+    'Булунский улус - Булуҥ улууһа (административный центр п. Тикси)',
+    'Верхневилюйский улус – Үөһээ Бүлүү улууһа (административный центр с. Верхневилюйск)',
+    'Верхнеколымский улус - Үөһээ Халыма улууһа (административный центр п. Зырянка)',
+    'Верхоянский улус - Үөһээ Дьааҥы улууһа (административный центр п. Батагай)',
+    'Вилюйский улус - Бүлүү улууһа (административный центр г. Вилюйск)',
+    'Горный улус - Горнай улууhа (административный центр с. Бердигестях)',
+    'Жиганский национальный эвенкийский улус - Эдьигээн улууһа (административный центр с. Жиганск)',
+    'Кобяйский улус - Кэбээйи улууһа (административный центр п. Сангар)',
+    'Ленский район - Ленскэй улууһа (административный центр г. Ленск)',
+    'Мегино-Кангаласский улус - Мэҥэ Хаҥалас улууһа (административный центр п. Нижний Бестях)',
+    'Мирнинский район - Мирнэй улууһа (административный центр г. Мирный)',
+    'Момский район - Муома улууһа (административный центр с. Хонуу)',
+    'Намский улус - Нам улууһа (административный центр с. Намцы)',
+    'Нерюнгринский район - Нүөрүҥгүрү улууhа (административный центр г. Нерюнгри)',
+    'Нижнеколымский улус - Аллараа Халыма улууhа (административный центр п. Черский)',
+    'Нюрбинский улус - Ньурба улууһа (административный центр г. Нюрба)',
+    'Оймяконский улус - Өймөкөөн улууhа (административный центр п. Усть-Нера)',
+    'Оленёкский национальный эвенкийский улус - Өлөөн улууһа (административный центр с. Оленек)',
+    'Олёкминский улус - Өлүөхүмэ улууһа (административный центр г. Олекминск)',
+    'Среднеколымский улус - Орто Халыма улууhа (административный центр г. Среднеколымск)',
+    'Сунтарский улус - Сунтаар улууһа (административный центр с. Сунтар)',
+    'Таттинский улус - Таатта улууһа (административный центр с. Ытык-Кюель)',
+    'Томпонский район - Томпо улууhа (административный центр п. Хандыга)',
+    'Усть-Алданский улус - Уус-Алдан улууһа (административный центр с. Борогонцы)',
+    'Усть-Майский улус - Уус-Маайа улууhа (административный центр п. Усть-Мая)',
+    'Усть-Янский улус - Усуйаана улууһа (административный центр п. Депутатский)',
+    'Хангаласский улус - Хаҥалас улууhа (административный центр г. Покровск)',
+    'Чурапчинский улус - Чурапчы улууhа (административный центр с. Чурапча)',
+    'Эвено-Бытантайский национальный улус - Эбээн-Бытантай улууhа (административный центр с. Батагай-Алыта)',
+  ];
+
+
+  // Получаем уникальные категории
+  const availableCategories = Array.from(new Set(allProducts.map(p => p.category))).sort();
+
+  const handleResetFilters = () => {
+    setSelectedCategory(null);
+    setSelectedUlys(null);
+    setSortBy('none');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -518,22 +480,30 @@ export default function App() {
       </section>
 
       {/* Filtered Products Section */}
-      {selectedCategory && (
+      {(selectedCategory || selectedUlys || sortBy !== 'none') && (
         <section id="filtered-products" className="py-16 bg-gray-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <ProductFilters
+              categories={availableCategories}
+              uluses={allUluses}
+              selectedCategory={selectedCategory}
+              selectedUlys={selectedUlys}
+              sortBy={sortBy}
+              onCategoryChange={setSelectedCategory}
+              onUlysChange={setSelectedUlys}
+              onSortChange={setSortBy}
+              onReset={handleResetFilters}
+            />
+
             <div className="flex items-center justify-between mb-12">
               <div>
-                <h2 className="text-gray-900 mb-2">{selectedCategory}</h2>
+                <h2 className="text-gray-900 mb-2">
+                  {selectedCategory ? selectedCategory : 'Все товары'}
+                </h2>
                 <p className="text-gray-600">
                   Найдено {filteredProducts.length} {filteredProducts.length === 1 ? 'товар' : filteredProducts.length < 5 ? 'товара' : 'товаров'}
                 </p>
               </div>
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className="bg-white text-indigo-600 border-2 border-indigo-600 px-6 py-2 rounded-lg hover:bg-indigo-50 transition"
-              >
-                Показать все
-              </button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
