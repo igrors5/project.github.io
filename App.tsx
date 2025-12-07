@@ -1,7 +1,6 @@
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { ProductCard } from './components/ProductCard';
-import { CategoryCard } from './components/CategoryCard';
 import { Footer } from './components/Footer';
 import { CartSidebar } from './components/CartSidebar';
 import { SearchModal } from './components/SearchModal';
@@ -11,7 +10,7 @@ import { AuthModal } from './components/AuthModal';
 import { AddProductModal } from './components/AddProductModal';
 import { SellerDashboard } from './components/SellerDashboard';
 import { CompanyProfile } from './components/CompanyProfile';
-import { ProductFilters } from './components/ProductFilters';
+import { ProductsPage } from './components/ProductsPage';
 import { Chatbot } from './components/Chatbot';
 import { Award, Truck, BadgeCheck, Phone } from './components/Icons';
 import { useState, useEffect } from 'react';
@@ -91,6 +90,7 @@ interface User {
 let toastIdCounter = 0;
 
 export default function App() {
+  const [currentPage, setCurrentPage] = useState<'home' | 'products'>('home');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -121,6 +121,17 @@ export default function App() {
       loadSellerProducts();
     }
   }, [user, accessToken]);
+
+  // Читаем параметр категории из URL при загрузке страницы
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryParam = urlParams.get('category');
+    if (categoryParam) {
+      const decodedCategory = decodeURIComponent(categoryParam);
+      setSelectedCategory(decodedCategory);
+      setCurrentPage('products');
+    }
+  }, []);
 
   const loadProducts = async () => {
     const response = await api.getProducts();
@@ -286,8 +297,13 @@ export default function App() {
     document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const scrollToCategories = () => {
-    document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' });
+  const handleViewAllProducts = () => {
+    setSelectedCategory(null);
+    setCurrentPage('products');
+    // Обновляем URL без перезагрузки страницы
+    const url = new URL(window.location.href);
+    url.searchParams.delete('category');
+    window.history.pushState({}, '', url.toString());
   };
 
   const handleCheckout = () => {
@@ -301,42 +317,17 @@ export default function App() {
 
   const handleCategoryClick = (categoryName: string) => {
     setSelectedCategory(categoryName);
-    setTimeout(() => {
-      document.getElementById('filtered-products')?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+    setCurrentPage('products');
+    // Обновляем URL без перезагрузки страницы
+    const url = new URL(window.location.href);
+    url.searchParams.set('category', encodeURIComponent(categoryName));
+    window.history.pushState({}, '', url.toString());
   };
 
   const handleProfileClick = () => {
     setIsSellerDashboardOpen(true);
   };
 
-  // Filter and sort products
-  let filteredProducts = allProducts;
-
-  // Фильтр по категории
-  if (selectedCategory) {
-    filteredProducts = filteredProducts.filter(product => product.category === selectedCategory);
-  }
-
-  // Фильтр по улусу
-  if (selectedUlys) {
-    filteredProducts = filteredProducts.filter(product => product.ulys === selectedUlys);
-  }
-
-  // Сортировка по дате
-  if (sortBy !== 'none') {
-    filteredProducts = [...filteredProducts].sort((a, b) => {
-      const dateA = new Date(a.createdAt || 0).getTime();
-      const dateB = new Date(b.createdAt || 0).getTime();
-      return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
-    });
-  }
-
-  // Calculate categories with actual item counts
-  const categories = categoryDefinitions.map(category => ({
-    ...category,
-    itemCount: allProducts.filter(product => product.category === category.name).length
-  }));
 
   // Полный список улусов (из AddProductModal)
   const allUluses = [
@@ -386,6 +377,28 @@ export default function App() {
     setSortBy('none');
   };
 
+  // Filter and sort products for ProductsPage
+  let filteredProducts = allProducts;
+  if (selectedCategory) {
+    filteredProducts = filteredProducts.filter(product => product.category === selectedCategory);
+  }
+  if (selectedUlys) {
+    filteredProducts = filteredProducts.filter(product => product.ulys === selectedUlys);
+  }
+  if (sortBy === 'newest') {
+    filteredProducts = [...filteredProducts].sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      return dateB - dateA;
+    });
+  } else if (sortBy === 'oldest') {
+    filteredProducts = [...filteredProducts].sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      return dateA - dateB;
+    });
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <ToastContainer toasts={toasts} onRemove={removeToast} />
@@ -398,7 +411,34 @@ export default function App() {
         onProfileClick={handleProfileClick}
         onLogout={handleLogout}
       />
-      <Hero onShopClick={scrollToProducts} onLearnClick={scrollToCategories} />
+      
+      {currentPage === 'products' ? (
+        <ProductsPage
+          products={allProducts}
+          categories={availableCategories}
+          uluses={allUluses}
+          selectedCategory={selectedCategory}
+          selectedUlys={selectedUlys}
+          sortBy={sortBy}
+          wishlist={wishlist}
+          onCategoryChange={setSelectedCategory}
+          onUlysChange={setSelectedUlys}
+          onSortChange={setSortBy}
+          onResetFilters={handleResetFilters}
+          onAddToCart={addToCart}
+          onToggleWishlist={toggleWishlist}
+          onProductClick={handleProductClick}
+          onBack={() => {
+            setCurrentPage('home');
+            setSelectedCategory(null);
+            setSelectedUlys(null);
+            setSortBy('none');
+            window.history.pushState({}, '', window.location.pathname);
+          }}
+        />
+      ) : (
+        <>
+          <Hero onShopClick={scrollToProducts} onLearnClick={handleViewAllProducts} />
 
       {/* Features Section */}
       <section className="py-16 bg-white">
@@ -445,7 +485,7 @@ export default function App() {
 
           <div className="text-center mt-12">
             <button 
-              onClick={scrollToCategories}
+              onClick={handleViewAllProducts}
               className="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition"
             >
               Смотреть все товары
@@ -453,83 +493,6 @@ export default function App() {
           </div>
         </div>
       </section>
-
-      {/* Categories Section */}
-      <section id="categories" className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-gray-900 mb-4">Категории</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Изучите наш широкий выбор традиционных якутских товаров
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {categories.map((category) => (
-              <CategoryCard 
-                key={category.id}
-                name={category.name}
-                itemCount={category.itemCount}
-                image={category.image}
-                onClick={() => handleCategoryClick(category.name)}
-                isSelected={selectedCategory === category.name}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Filtered Products Section */}
-      {(selectedCategory || selectedUlys || sortBy !== 'none') && (
-        <section id="filtered-products" className="py-16 bg-gray-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <ProductFilters
-              categories={availableCategories}
-              uluses={allUluses}
-              selectedCategory={selectedCategory}
-              selectedUlys={selectedUlys}
-              sortBy={sortBy}
-              onCategoryChange={setSelectedCategory}
-              onUlysChange={setSelectedUlys}
-              onSortChange={setSortBy}
-              onReset={handleResetFilters}
-            />
-
-            <div className="flex items-center justify-between mb-12">
-              <div>
-                <h2 className="text-gray-900 mb-2">
-                  {selectedCategory ? selectedCategory : 'Все товары'}
-                </h2>
-                <p className="text-gray-600">
-                  Найдено {filteredProducts.length} {filteredProducts.length === 1 ? 'товар' : filteredProducts.length < 5 ? 'товара' : 'товаров'}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
-                <ProductCard 
-                  key={product.id}
-                  name={product.name}
-                  price={product.price}
-                  image={product.image}
-                  category={product.category}
-                  onAddToCart={() => addToCart(product)}
-                  onToggleWishlist={() => toggleWishlist(product.id)}
-                  isInWishlist={wishlist.includes(product.id)}
-                  onCardClick={() => handleProductClick(product)}
-                />
-              ))}
-            </div>
-
-            {filteredProducts.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">В этой категории пока нет товаров</p>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
 
       {/* Newsletter Section */}
       <section className="py-16 bg-indigo-600">
@@ -556,7 +519,9 @@ export default function App() {
         </div>
       </section>
 
-      <Footer onShowToast={showToast} />
+          <Footer onShowToast={showToast} />
+        </>
+      )}
       
       <CartSidebar
         isOpen={isCartOpen}
