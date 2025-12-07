@@ -17,28 +17,6 @@ import { useState, useEffect } from 'react';
 import { api } from './utils/api';
 import { Product } from './utils/localDB';
 
-const categoryDefinitions = [
-  {
-    id: 1,
-    name: 'Традиционные ремесла',
-    image: 'https://images.unsplash.com/photo-1596626417050-39c7f6ddd2c9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aWNrZXIlMjBiYXNrZXQlMjBoYW5kbWFkZXxlbnwxfHx8fDE3NjQ4NTUxODl8MA&ixlib=rb-4.1.0&q=80&w=1080'
-  },
-  {
-    id: 2,
-    name: 'Украшения',
-    image: 'https://images.unsplash.com/photo-1656109801168-699967cf3ba9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzaWx2ZXIlMjBlYXJyaW5ncyUyMGpld2Vscnl8ZW58MXx8fHwxNzY0NzU3MTY3fDA&ixlib=rb-4.1.0&q=80&w=1080'
-  },
-  {
-    id: 3,
-    name: 'Одежда и текстиль',
-    image: 'https://images.unsplash.com/photo-1763400126795-d83e07d3449e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cmFkaXRpb25hbCUyMHRleHRpbGUlMjBlbWJyb2lkZXJ5fGVufDF8fHx8MTc2NDg1NTE4OHww&ixlib=rb-4.1.0&q=80&w=1080'
-  },
-  {
-    id: 4,
-    name: 'Деревянные изделия',
-    image: 'https://images.unsplash.com/photo-1583041475142-cfd72e558188?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b29kZW4lMjBjYXJ2ZWQlMjBib3h8ZW58MXx8fHwxNzY0ODU1MTg4fDA&ixlib=rb-4.1.0&q=80&w=1080'
-  },
-];
 
 const features = [
   {
@@ -235,6 +213,25 @@ export default function App() {
     }
   };
 
+  const handleDeleteProduct = async (productId: number) => {
+    if (!accessToken) {
+      toast.error('Необходимо войти в систему');
+      return;
+    }
+
+    const response = await api.deleteProduct(productId, accessToken);
+    if (response.error) {
+      toast.error(response.error);
+      return;
+    }
+
+    if (response.success) {
+      toast.success('Товар успешно удален!');
+      await loadProducts();
+      await loadSellerProducts();
+    }
+  };
+
   const addToCart = (product: Product, quantity: number = 1) => {
     setCartItems(prev => {
       const existing = prev.find(item => item.id === product.id);
@@ -315,14 +312,6 @@ export default function App() {
     }, 1500);
   };
 
-  const handleCategoryClick = (categoryName: string) => {
-    setSelectedCategory(categoryName);
-    setCurrentPage('products');
-    // Обновляем URL без перезагрузки страницы
-    const url = new URL(window.location.href);
-    url.searchParams.set('category', encodeURIComponent(categoryName));
-    window.history.pushState({}, '', url.toString());
-  };
 
   const handleProfileClick = () => {
     setIsSellerDashboardOpen(true);
@@ -402,15 +391,18 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       <ToastContainer toasts={toasts} onRemove={removeToast} />
-      <Header 
-        cartCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-        onCartClick={() => setIsCartOpen(true)}
-        onSearchClick={() => setIsSearchOpen(true)}
-        user={user}
-        onAuthClick={() => setIsAuthModalOpen(true)}
-        onProfileClick={handleProfileClick}
-        onLogout={handleLogout}
-      />
+      
+      {currentPage === 'home' && (
+        <Header 
+          cartCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+          onCartClick={() => setIsCartOpen(true)}
+          onSearchClick={() => setIsSearchOpen(true)}
+          user={user}
+          onAuthClick={() => setIsAuthModalOpen(true)}
+          onProfileClick={handleProfileClick}
+          onLogout={handleLogout}
+        />
+      )}
       
       {currentPage === 'products' ? (
         <ProductsPage
@@ -468,19 +460,31 @@ export default function App() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {allProducts.slice(0, 4).map((product) => (
-              <ProductCard 
-                key={product.id}
-                name={product.name}
-                price={product.price}
-                image={product.image}
-                category={product.category}
-                onAddToCart={() => addToCart(product)}
-                onToggleWishlist={() => toggleWishlist(product.id)}
-                isInWishlist={wishlist.includes(product.id)}
-                onCardClick={() => handleProductClick(product)}
-              />
-            ))}
+            {(() => {
+              // Берем товары не из категории "Традиционные ремесла"
+              const nonCraftProducts = allProducts.filter(product => product.category !== 'Традиционные ремесла');
+              // Берем один товар из категории "Традиционные ремесла" для добавления
+              const craftProduct = allProducts.find(product => product.category === 'Традиционные ремесла');
+              // Объединяем: сначала не-ремесла, потом один ремесленный
+              const recommendedProducts = [...nonCraftProducts];
+              if (craftProduct && recommendedProducts.length < 4) {
+                recommendedProducts.push(craftProduct);
+              }
+              return recommendedProducts.slice(0, 4).map((product) => (
+                <ProductCard 
+                  key={product.id}
+                  name={product.name}
+                  price={product.price}
+                  image={product.image}
+                  category={product.category}
+                  onAddToCart={() => addToCart(product)}
+                  onToggleWishlist={() => toggleWishlist(product.id)}
+                  isInWishlist={wishlist.includes(product.id)}
+                  onCardClick={() => handleProductClick(product)}
+                  sellerId={product.sellerId}
+                />
+              ));
+            })()}
           </div>
 
           <div className="text-center mt-12">
@@ -576,6 +580,7 @@ export default function App() {
           setIsSellerDashboardOpen(false);
           setIsCompanyProfileOpen(true);
         }}
+        onDeleteProduct={handleDeleteProduct}
       />
 
       <CompanyProfile

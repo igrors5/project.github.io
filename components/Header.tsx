@@ -26,9 +26,7 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-gray-700 hover:text-indigo-600 transition">Главная</a>
             <a href="#products" onClick={(e) => { e.preventDefault(); document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-gray-700 hover:text-indigo-600 transition">Товары</a>
-            <a href="#categories" onClick={(e) => { e.preventDefault(); document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-gray-700 hover:text-indigo-600 transition">Категории</a>
             <a href="#about" className="text-gray-700 hover:text-indigo-600 transition">О нас</a>
             <a href="#contact" className="text-gray-700 hover:text-indigo-600 transition">Контакты</a>
           </nav>
@@ -118,9 +116,7 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t">
             <nav className="flex flex-col space-y-4">
-              <a href="#" onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setMobileMenuOpen(false); }} className="text-gray-700 hover:text-indigo-600 transition">Главная</a>
               <a href="#products" onClick={(e) => { e.preventDefault(); document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' }); setMobileMenuOpen(false); }} className="text-gray-700 hover:text-indigo-600 transition">Товары</a>
-              <a href="#categories" onClick={(e) => { e.preventDefault(); document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' }); setMobileMenuOpen(false); }} className="text-gray-700 hover:text-indigo-600 transition">Категории</a>
               <a href="#about" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-indigo-600 transition">О нас</a>
               <a href="#contact" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-indigo-600 transition">Контакты</a>
               <div className="flex items-center space-x-4 pt-4 border-t">

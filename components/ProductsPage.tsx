@@ -114,6 +114,7 @@ export function ProductsPage({
                 onToggleWishlist={() => onToggleWishlist(product.id)}
                 isInWishlist={wishlist.includes(product.id)}
                 onCardClick={() => onProductClick(product)}
+                sellerId={product.sellerId}
               />
             ))}
           </div>

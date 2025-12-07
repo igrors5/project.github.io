@@ -63,7 +63,7 @@ export function ProductModal({
             {/* Image */}
             <div className="relative">
               <ImageWithFallback
-                src={product.image}
+                src={product.image || "https://avatars.mds.yandex.net/i?id=391a6172a397ce425b6374d4463d3edec81ab7dd-10397524-images-thumbs&n=13"}
                 alt={product.name}
                 className="w-full h-96 object-cover rounded-lg"
               />

@@ -96,14 +96,6 @@ export function Footer({ onShowToast }: FooterProps) {
               </li>
               <li>
                 <button 
-                  onClick={() => scrollToSection('categories')}
-                  className="hover:text-white transition cursor-pointer text-left"
-                >
-                  Категории
-                </button>
-              </li>
-              <li>
-                <button 
                   onClick={() => handleServiceClick('О нас')}
                   className="hover:text-white transition cursor-pointer text-left"
                 >

@@ -1,4 +1,4 @@
-import { X, Plus } from './Icons';
+import { X, Plus, Trash2 } from './Icons';
 
 interface Product {
   id: number;
@@ -15,9 +15,10 @@ interface SellerDashboardProps {
   products: Product[];
   onAddProduct: () => void;
   onCompanyProfile: () => void;
+  onDeleteProduct?: (productId: number) => void;
 }
 
-export function SellerDashboard({ isOpen, onClose, products, onAddProduct, onCompanyProfile }: SellerDashboardProps) {
+export function SellerDashboard({ isOpen, onClose, products, onAddProduct, onCompanyProfile, onDeleteProduct }: SellerDashboardProps) {
   if (!isOpen) return null;
 
   return (
@@ -61,7 +62,7 @@ export function SellerDashboard({ isOpen, onClose, products, onAddProduct, onCom
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {products.map((product) => (
-                  <div key={product.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                  <div key={product.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition relative">
                     <div className="flex gap-4">
                       {product.image && (
                         <img
@@ -78,6 +79,19 @@ export function SellerDashboard({ isOpen, onClose, products, onAddProduct, onCom
                     </div>
                     {product.description && (
                       <p className="text-gray-600 text-sm mt-3 line-clamp-2">{product.description}</p>
+                    )}
+                    {onDeleteProduct && (
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Вы уверены, что хотите удалить товар "${product.name}"?`)) {
+                            onDeleteProduct(product.id);
+                          }
+                        }}
+                        className="absolute top-4 right-4 bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition"
+                        title="Удалить товар"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     )}
                   </div>
                 ))}

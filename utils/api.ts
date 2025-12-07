@@ -153,4 +153,32 @@ export const api = {
       return { error: 'Ошибка при загрузке товаров', products: [] };
     }
   },
+
+  async deleteProduct(productId: number, accessToken: string) {
+    try {
+      const session = sessionDB.getByToken(accessToken);
+      if (!session) {
+        return { error: 'Недействительная сессия' };
+      }
+
+      const product = productDB.getById(productId);
+      if (!product) {
+        return { error: 'Товар не найден' };
+      }
+
+      // Проверяем, что товар принадлежит текущему продавцу
+      if (product.sellerId !== session.userId) {
+        return { error: 'У вас нет прав на удаление этого товара' };
+      }
+
+      const deleted = productDB.delete(productId);
+      if (deleted) {
+        return { success: true };
+      } else {
+        return { error: 'Не удалось удалить товар' };
+      }
+    } catch (error) {
+      return { error: 'Ошибка при удалении товара' };
+    }
+  },
 };

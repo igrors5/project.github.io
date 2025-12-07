@@ -10,6 +10,7 @@ interface ProductCardProps {
   onToggleWishlist: () => void;
   isInWishlist: boolean;
   onCardClick?: () => void;
+  sellerId?: string;
 }
 
 export function ProductCard({ 
@@ -20,7 +21,8 @@ export function ProductCard({
   onAddToCart, 
   onToggleWishlist, 
   isInWishlist,
-  onCardClick 
+  onCardClick,
+  sellerId 
 }: ProductCardProps) {
   const handleCardClick = (e: React.MouseEvent) => {
     // Prevent card click when clicking on buttons
@@ -37,12 +39,16 @@ export function ProductCard({
       className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 group cursor-pointer"
       onClick={handleCardClick}
     >
-      <div className="relative overflow-hidden h-64">
-        <ImageWithFallback 
-          src={image}
-          alt={name}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-        />
+      <div className="relative overflow-hidden h-64 bg-gray-200 flex items-center justify-center">
+        {image ? (
+          <ImageWithFallback 
+            src={image}
+            alt={name}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-200"></div>
+        )}
         <button 
           onClick={(e) => {
             e.stopPropagation();
