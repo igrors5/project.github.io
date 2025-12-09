@@ -11,14 +11,14 @@
 
 ### Установка и запуск
 
-1. **Установите зависимости** (выполнить один раз):
+   **Установка**:
    ```bash
-   npm install
+   cd C:\Users\K416_03\Documents\GitHub\project.github.io; npm.cmd install
    ```
 
 2. **Запустите dev сервер**:
    ```bash
-   npm run dev
+   cd C:\Users\K416_03\Documents\GitHub\project.github.io; npm.cmd run dev
    ```
 
 3. **Откройте в браузере**:
