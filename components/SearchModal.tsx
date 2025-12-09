@@ -8,6 +8,7 @@ interface Product {
   price: number;
   image: string;
   category: string;
+  quantity?: number;
 }
 
 interface SearchModalProps {
@@ -41,6 +42,7 @@ export function SearchModal({ isOpen, onClose, products, onAddToCart, onProductC
 
   const handleAddToCart = (product: Product, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (product.quantity !== undefined && product.quantity <= 0) return;
     onAddToCart(product);
   };
 
@@ -99,6 +101,7 @@ export function SearchModal({ isOpen, onClose, products, onAddToCart, onProductC
                   </div>
                   <button
                     onClick={(e) => handleAddToCart(product, e)}
+                    disabled={product.quantity !== undefined && product.quantity <= 0}
                     className="self-center bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700 transition flex-shrink-0"
                     title="Добавить в корзину"
                   >

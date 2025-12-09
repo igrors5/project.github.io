@@ -7,6 +7,8 @@ interface Product {
   image: string;
   category: string;
   description?: string;
+  quantity?: number;
+  hidden?: boolean;
 }
 
 interface SellerDashboardProps {
@@ -16,9 +18,10 @@ interface SellerDashboardProps {
   onAddProduct: () => void;
   onCompanyProfile: () => void;
   onDeleteProduct?: (productId: number) => void;
+  onToggleProductVisibility?: (productId: number, hidden: boolean) => void;
 }
 
-export function SellerDashboard({ isOpen, onClose, products, onAddProduct, onCompanyProfile, onDeleteProduct }: SellerDashboardProps) {
+export function SellerDashboard({ isOpen, onClose, products, onAddProduct, onCompanyProfile, onDeleteProduct, onToggleProductVisibility }: SellerDashboardProps) {
   if (!isOpen) return null;
 
   return (
@@ -75,24 +78,46 @@ export function SellerDashboard({ isOpen, onClose, products, onAddProduct, onCom
                         <h4 className="text-gray-800 mb-1">{product.name}</h4>
                         <p className="text-indigo-600 mb-2">{product.price.toLocaleString()} ₽</p>
                         <p className="text-gray-500 text-sm">{product.category}</p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {product.quantity !== undefined ? `В наличии: ${product.quantity}` : 'Количество не указано'}
+                        </p>
+                        {product.hidden && (
+                          <span className="inline-block mt-1 text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                            Скрыт
+                          </span>
+                        )}
                       </div>
                     </div>
                     {product.description && (
                       <p className="text-gray-600 text-sm mt-3 line-clamp-2">{product.description}</p>
                     )}
-                    {onDeleteProduct && (
-                      <button
-                        onClick={() => {
-                          if (window.confirm(`Вы уверены, что хотите удалить товар "${product.name}"?`)) {
-                            onDeleteProduct(product.id);
-                          }
-                        }}
-                        className="absolute top-4 right-4 bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition"
-                        title="Удалить товар"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
+                    <div className="absolute top-4 right-4 flex gap-2">
+                      {onToggleProductVisibility && (
+                        <button
+                          onClick={() => onToggleProductVisibility(product.id, !product.hidden)}
+                          className={`px-3 py-2 rounded-lg text-sm ${
+                            product.hidden
+                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {product.hidden ? 'Показать' : 'Скрыть'}
+                        </button>
+                      )}
+                      {onDeleteProduct && (
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Вы уверены, что хотите удалить товар "${product.name}"?`)) {
+                              onDeleteProduct(product.id);
+                            }
+                          }}
+                          className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition"
+                          title="Удалить товар"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

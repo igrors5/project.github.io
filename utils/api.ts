@@ -24,7 +24,10 @@ interface ProductData {
   image?: string;
   category: string;
   description?: string;
+  characteristics?: string;
+  quantity?: number;
   ulys?: string;
+  hidden?: boolean;
 }
 
 // Генерация токена
@@ -130,8 +133,11 @@ export const api = {
         image: data.image || '',
         category: data.category,
         description: data.description,
+        characteristics: data.characteristics,
+        quantity: data.quantity ?? 0,
         ulys: data.ulys,
         sellerId: session.userId,
+        hidden: false,
       });
 
       return { success: true, product };
@@ -179,6 +185,29 @@ export const api = {
       }
     } catch (error) {
       return { error: 'Ошибка при удалении товара' };
+    }
+  },
+
+  async updateProduct(productId: number, updates: Partial<ProductData>, accessToken: string) {
+    try {
+      const session = sessionDB.getByToken(accessToken);
+      if (!session) {
+        return { error: 'Недействительная сессия' };
+      }
+
+      const product = productDB.getById(productId);
+      if (!product) {
+        return { error: 'Товар не найден' };
+      }
+
+      if (product.sellerId && product.sellerId !== session.userId) {
+        return { error: 'У вас нет прав на изменение этого товара' };
+      }
+
+      const updated = productDB.update(productId, updates);
+      return { success: true, product: updated };
+    } catch (error) {
+      return { error: 'Ошибка при обновлении товара' };
     }
   },
 };

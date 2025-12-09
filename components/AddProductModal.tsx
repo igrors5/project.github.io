@@ -10,6 +10,8 @@ interface AddProductModalProps {
     image: string;
     category: string;
     description: string;
+    characteristics: string;
+    quantity: number;
     ulys: string;
   }) => void;
 }
@@ -19,6 +21,7 @@ const categories = [
   'Украшения',
   'Одежда и текстиль',
   'Деревянные изделия',
+  'Продукты питания',
 ];
 
 const uluses = [
@@ -64,6 +67,8 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
   const [image, setImage] = useState('');
   const [category, setCategory] = useState(categories[0]);
   const [description, setDescription] = useState('');
+  const [characteristics, setCharacteristics] = useState('');
+  const [quantity, setQuantity] = useState('1');
   const [ulys, setUlys] = useState('');
 
   if (!isOpen) return null;
@@ -76,6 +81,8 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
       image,
       category,
       description,
+      characteristics,
+      quantity: Number(quantity) || 0,
       ulys,
     });
     resetForm();
@@ -87,6 +94,8 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
     setImage('');
     setCategory(categories[0]);
     setDescription('');
+    setCharacteristics('');
+    setQuantity('1');
     setUlys('');
   };
 
@@ -162,6 +171,18 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
             </div>
 
             <div>
+              <label className="block text-gray-700 mb-2">Количество доступно *</label>
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                required
+                min="0"
+              />
+            </div>
+
+            <div>
               <label className="block text-gray-700 mb-2">Описание</label>
               <textarea
                 value={description}
@@ -169,6 +190,17 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                 rows={4}
                 placeholder="Расскажите о вашем товаре..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 mb-2">Характеристики (каждая с новой строки)</label>
+              <textarea
+                value={characteristics}
+                onChange={(e) => setCharacteristics(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                rows={4}
+                placeholder="Например: материал, размеры, цвет..."
               />
             </div>
 

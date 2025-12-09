@@ -87,10 +87,27 @@ export default function App() {
   const [isCompanyProfileOpen, setIsCompanyProfileOpen] = useState(false);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [sellerProducts, setSellerProducts] = useState<any[]>([]);
+  const AUTH_TOKEN_KEY = 'authToken';
 
   // Load products from server
   useEffect(() => {
     loadProducts();
+  }, []);
+
+  // Restore session from localStorage
+  useEffect(() => {
+    const storedToken = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!storedToken) return;
+
+    (async () => {
+      const profileData = await api.getProfile(storedToken);
+      if (profileData.success) {
+        setAccessToken(storedToken);
+        setUser(profileData.user);
+      } else {
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+      }
+    })();
   }, []);
 
   // Load seller products when user is logged in
@@ -154,6 +171,7 @@ export default function App() {
 
     if (response.session?.access_token) {
       setAccessToken(response.session.access_token);
+      localStorage.setItem(AUTH_TOKEN_KEY, response.session.access_token);
       const profileData = await api.getProfile(response.session.access_token);
       if (profileData.success) {
         setUser(profileData.user);
@@ -183,6 +201,7 @@ export default function App() {
     }
     setUser(null);
     setAccessToken(null);
+    localStorage.removeItem(AUTH_TOKEN_KEY);
     toast.success('Вы вышли из системы');
   };
 
@@ -192,6 +211,8 @@ export default function App() {
     image: string;
     category: string;
     description: string;
+    characteristics: string;
+    quantity: number;
     ulys: string;
   }) => {
     if (!accessToken) {
@@ -210,6 +231,18 @@ export default function App() {
       setIsAddProductModalOpen(false);
       await loadProducts();
       await loadSellerProducts();
+    }
+  };
+
+  const handleToggleProductVisibility = async (productId: number, hidden: boolean) => {
+    if (!accessToken) return;
+    const response = await api.updateProduct(productId, { hidden }, accessToken);
+    if (response.success) {
+      await loadProducts();
+      await loadSellerProducts();
+      toast.success(hidden ? 'Товар скрыт' : 'Товар опубликован');
+    } else if (response.error) {
+      toast.error(response.error);
     }
   };
 
@@ -233,18 +266,26 @@ export default function App() {
   };
 
   const addToCart = (product: Product, quantity: number = 1) => {
+    if (product.quantity !== undefined && product.quantity <= 0) {
+      toast.error('Товар недоступен');
+      return;
+    }
     setCartItems(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
         toast.success('Количество товара увеличено!');
-        return prev.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
+        return prev.map(item => {
+          if (item.id !== product.id) return item;
+          const newQty = item.quantity + quantity;
+          if (product.quantity !== undefined) {
+            return { ...item, quantity: Math.min(newQty, product.quantity) };
+          }
+          return { ...item, quantity: newQty };
+        });
       }
       toast.success('Товар добавлен в корзину!');
-      return [...prev, { ...product, quantity }];
+      const initialQty = product.quantity !== undefined ? Math.min(quantity, product.quantity) : quantity;
+      return [...prev, { ...product, quantity: initialQty }];
     });
   };
 
@@ -358,7 +399,11 @@ export default function App() {
 
 
   // Получаем уникальные категории
-  const availableCategories = Array.from(new Set(allProducts.map(p => p.category))).sort();
+  const availableCategories = Array.from(new Set(allProducts.map(p => p.category)));
+  if (!availableCategories.includes('Продукты питания')) {
+    availableCategories.push('Продукты питания');
+  }
+  availableCategories.sort();
 
   const handleResetFilters = () => {
     setSelectedCategory(null);
@@ -406,13 +451,15 @@ export default function App() {
       
       {currentPage === 'products' ? (
         <ProductsPage
-          products={allProducts}
+          products={allProducts.filter(p => !p.hidden)}
           categories={availableCategories}
           uluses={allUluses}
           selectedCategory={selectedCategory}
           selectedUlys={selectedUlys}
           sortBy={sortBy}
           wishlist={wishlist}
+          cartCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+          user={user}
           onCategoryChange={setSelectedCategory}
           onUlysChange={setSelectedUlys}
           onSortChange={setSortBy}
@@ -427,6 +474,10 @@ export default function App() {
             setSortBy('none');
             window.history.pushState({}, '', window.location.pathname);
           }}
+          onCartClick={() => setIsCartOpen(true)}
+          onAuthClick={() => setIsAuthModalOpen(true)}
+          onProfileClick={handleProfileClick}
+          onLogout={handleLogout}
         />
       ) : (
         <>
@@ -461,10 +512,11 @@ export default function App() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {(() => {
-              // Берем товары не из категории "Традиционные ремесла"
-              const nonCraftProducts = allProducts.filter(product => product.category !== 'Традиционные ремесла');
+              // Берем товары не из категории "Традиционные ремесла" и не скрытые
+              const visibleProducts = allProducts.filter(p => !p.hidden);
+              const nonCraftProducts = visibleProducts.filter(product => product.category !== 'Традиционные ремесла');
               // Берем один товар из категории "Традиционные ремесла" для добавления
-              const craftProduct = allProducts.find(product => product.category === 'Традиционные ремесла');
+              const craftProduct = visibleProducts.find(product => product.category === 'Традиционные ремесла');
               // Объединяем: сначала не-ремесла, потом один ремесленный
               const recommendedProducts = [...nonCraftProducts];
               if (craftProduct && recommendedProducts.length < 4) {
@@ -477,6 +529,7 @@ export default function App() {
                   price={product.price}
                   image={product.image}
                   category={product.category}
+                  quantity={product.quantity}
                   onAddToCart={() => addToCart(product)}
                   onToggleWishlist={() => toggleWishlist(product.id)}
                   isInWishlist={wishlist.includes(product.id)}
@@ -539,7 +592,7 @@ export default function App() {
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-        products={allProducts}
+        products={allProducts.filter(p => !p.hidden)}
         onAddToCart={addToCart}
         onProductClick={handleProductClick}
       />
@@ -581,6 +634,7 @@ export default function App() {
           setIsCompanyProfileOpen(true);
         }}
         onDeleteProduct={handleDeleteProduct}
+        onToggleProductVisibility={handleToggleProductVisibility}
       />
 
       <CompanyProfile

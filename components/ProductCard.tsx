@@ -6,6 +6,7 @@ interface ProductCardProps {
   price: number;
   image: string;
   category: string;
+  quantity?: number;
   onAddToCart: () => void;
   onToggleWishlist: () => void;
   isInWishlist: boolean;
@@ -18,6 +19,7 @@ export function ProductCard({
   price, 
   image, 
   category, 
+  quantity,
   onAddToCart, 
   onToggleWishlist, 
   isInWishlist,
@@ -65,18 +67,26 @@ export function ProductCard({
       
       <div className="p-4">
         <h3 className="text-gray-800 mb-2">{name}</h3>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-2">
           <span className="text-indigo-600 text-2xl">{price.toLocaleString()} ₽</span>
           <button 
             onClick={(e) => {
               e.stopPropagation();
               onAddToCart();
             }}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition flex items-center gap-2"
+            disabled={quantity !== undefined && quantity <= 0}
+            className={`px-4 py-2 rounded-lg transition flex items-center gap-2 ${
+              quantity !== undefined && quantity <= 0
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+            }`}
           >
             <ShoppingCart className="w-4 h-4" />
-            <span>В корзину</span>
+            <span>{quantity !== undefined && quantity <= 0 ? 'Нет в наличии' : 'В корзину'}</span>
           </button>
+        </div>
+        <div className="text-sm text-gray-600">
+          {quantity !== undefined ? `В наличии: ${quantity}` : 'Количество не указано'}
         </div>
       </div>
     </div>
