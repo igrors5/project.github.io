@@ -9,9 +9,13 @@ interface HeaderProps {
   onAuthClick: () => void;
   onProfileClick?: () => void;
   onLogout?: () => void;
+  isAdmin?: boolean;
+  onAdminClick?: () => void;
+  onMakeAdmin?: () => void;
+  isSeller?: boolean;
 }
 
-export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClick, onProfileClick, onLogout }: HeaderProps) {
+export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClick, onProfileClick, onLogout, isAdmin, onAdminClick, onMakeAdmin, isSeller }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
@@ -64,7 +68,7 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
                     <div className="px-4 py-2 border-b">
                       <p className="text-sm text-gray-600">{user.email}</p>
                     </div>
-                    {onProfileClick && (
+                    {onProfileClick && isSeller && (
                       <button
                         onClick={() => {
                           onProfileClick();
@@ -73,6 +77,28 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
                         className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
                       >
                         Мои товары
+                      </button>
+                    )}
+                    {isAdmin && onAdminClick && (
+                      <button
+                        onClick={() => {
+                          onAdminClick();
+                          setProfileMenuOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
+                      >
+                        Панель продавца
+                      </button>
+                    )}
+                    {!isAdmin && onMakeAdmin && (
+                      <button
+                        onClick={() => {
+                          onMakeAdmin();
+                          setProfileMenuOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-amber-600 hover:bg-gray-100 transition text-sm"
+                      >
+                        Стать продавцом
                       </button>
                     )}
                     {onLogout && (

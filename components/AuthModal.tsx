@@ -6,14 +6,19 @@ interface AuthModalProps {
   onClose: () => void;
   onLogin: (email: string, password: string) => void;
   onSignup: (email: string, password: string, name: string) => void;
+  onRecoveryRequest: (data: { email?: string; hasNoEmail: boolean; comment?: string }) => void;
 }
 
-export function AuthModal({ isOpen, onClose, onLogin, onSignup }: AuthModalProps) {
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+export function AuthModal({ isOpen, onClose, onLogin, onSignup, onRecoveryRequest }: AuthModalProps) {
+  const [mode, setMode] = useState<'login' | 'signup' | 'help'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [nameError, setNameError] = useState<string>('');
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [recoveryComment, setRecoveryComment] = useState('');
+  const [hasNoEmail, setHasNoEmail] = useState(false);
+  const [recoveryError, setRecoveryError] = useState('');
 
   if (!isOpen) return null;
 
@@ -41,15 +46,37 @@ export function AuthModal({ isOpen, onClose, onLogin, onSignup }: AuthModalProps
     }
   };
 
+  const handleRecoverySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!recoveryEmail.trim() && !hasNoEmail) {
+      setRecoveryError('Укажите email или отметьте, что нет доступа к почте');
+      return;
+    }
+
+    setRecoveryError('');
+    onRecoveryRequest({
+      email: recoveryEmail.trim() || undefined,
+      hasNoEmail,
+      comment: recoveryComment.trim() || undefined,
+    });
+    resetForm();
+    setMode('login');
+  };
+
   const resetForm = () => {
     setEmail('');
     setPassword('');
     setName('');
     setNameError('');
+    setRecoveryEmail('');
+    setRecoveryComment('');
+    setHasNoEmail(false);
+    setRecoveryError('');
   };
 
   const handleClose = () => {
     resetForm();
+    setMode('login');
     onClose();
   };
 
@@ -74,7 +101,7 @@ export function AuthModal({ isOpen, onClose, onLogin, onSignup }: AuthModalProps
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={mode === 'help' ? handleRecoverySubmit : handleSubmit} className="space-y-4">
             {mode === 'signup' && (
               <div>
                 <label className="block text-gray-700 mb-2">Имя</label>
@@ -108,47 +135,122 @@ export function AuthModal({ isOpen, onClose, onLogin, onSignup }: AuthModalProps
               </div>
             )}
 
-            <div>
-              <label className="block text-gray-700 mb-2">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                required
-              />
-            </div>
+            {mode !== 'help' && (
+              <>
+                <div>
+                  <label className="block text-gray-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
 
-            <div>
-              <label className="block text-gray-700 mb-2">Пароль</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                required
-                minLength={6}
-              />
-            </div>
+                <div>
+                  <label className="block text-gray-700 mb-2">Пароль</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    required
+                    minLength={6}
+                  />
+                </div>
+              </>
+            )}
 
+            {mode === 'help' && (
+              <>
+                <div className="p-3 bg-indigo-50 rounded-lg text-sm text-indigo-900">
+                  <p className="font-medium">Поможем восстановить доступ</p>
+                  <p className="mt-1 text-indigo-800">
+                    Укажите email, если помните его, или отметьте, что нет доступа к почте. Мы свяжемся через чат и подскажем, как восстановить пароль вручную.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 mb-2">Email (если есть доступ)</label>
+                  <input
+                    type="email"
+                    value={recoveryEmail}
+                    onChange={(e) => setRecoveryEmail(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="you@example.com"
+                  />
+                </div>
+
+                <label className="flex items-start gap-3 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={hasNoEmail}
+                    onChange={(e) => setHasNoEmail(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span>Нет доступа к почте — хочу восстановить через поддержку</span>
+                </label>
+
+                <div>
+                  <label className="block text-gray-700 mb-2">Комментарий (телефон/мессенджер для связи)</label>
+                  <textarea
+                    value={recoveryComment}
+                    onChange={(e) => setRecoveryComment(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    rows={3}
+                    placeholder="Например: свяжитесь в Telegram @username"
+                  />
+                </div>
+
+                {recoveryError && (
+                  <p className="text-sm text-red-500">{recoveryError}</p>
+                )}
+              </>
+            )}
 
             <button
               type="submit"
               className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition"
             >
-              {mode === 'login' ? 'Войти' : 'Зарегистрироваться'}
+              {mode === 'login' && 'Войти'}
+              {mode === 'signup' && 'Зарегистрироваться'}
+              {mode === 'help' && 'Отправить запрос'}
             </button>
           </form>
 
-          <div className="mt-4 text-center">
-            <button
-              onClick={switchMode}
-              className="text-indigo-600 hover:text-indigo-700 transition"
-            >
-              {mode === 'login'
-                ? 'Нет аккаунта? Зарегистрируйтесь'
-                : 'Уже есть аккаунт? Войдите'}
-            </button>
+          <div className="mt-4 text-center space-y-2">
+            {mode !== 'help' ? (
+              <>
+                <button
+                  onClick={switchMode}
+                  className="block w-full text-indigo-600 hover:text-indigo-700 transition"
+                >
+                  {mode === 'login'
+                    ? 'Нет аккаунта? Зарегистрируйтесь'
+                    : 'Уже есть аккаунт? Войдите'}
+                </button>
+                <button
+                  onClick={() => {
+                    resetForm();
+                    setMode('help');
+                  }}
+                  className="block w-full text-sm text-gray-600 hover:text-gray-800 transition"
+                >
+                  Забыли пароль или нет доступа к почте?
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => {
+                  resetForm();
+                  setMode('login');
+                }}
+                className="block w-full text-indigo-600 hover:text-indigo-700 transition"
+              >
+                Вернуться к входу
+              </button>
+            )}
           </div>
         </div>
       </div>

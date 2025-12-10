@@ -1,5 +1,5 @@
 import { projectId, publicAnonKey } from './supabase/info';
-import { initDB, userDB, productDB, sessionDB, User, Product } from './localDB';
+import { initDB, userDB, productDB, sessionDB, promoDB, User, Product, Promo } from './localDB';
 
 const supabaseUrl = `https://${projectId}.supabase.co`;
 const API_BASE = `${supabaseUrl}/functions/v1/make-server-65112a46`;
@@ -25,6 +25,18 @@ interface ProductData {
   category: string;
   description?: string;
   ulys?: string;
+  stock?: number;
+  discountPercent?: number;
+  features?: string;
+}
+
+interface UpdateProductData extends ProductData {
+  id: number;
+}
+
+interface PromoData {
+  code: string;
+  maxUses: number;
 }
 
 // Генерация токена
@@ -132,11 +144,46 @@ export const api = {
         description: data.description,
         ulys: data.ulys,
         sellerId: session.userId,
+        stock: data.stock ?? 0,
+        discountPercent: data.discountPercent ?? 0,
+        sold: 0,
+        features: data.features ?? '',
       });
 
       return { success: true, product };
     } catch (error) {
       return { error: 'Ошибка при добавлении товара' };
+    }
+  },
+
+  async updateProduct(data: UpdateProductData, accessToken: string) {
+    try {
+      const session = sessionDB.getByToken(accessToken);
+      if (!session) {
+        return { error: 'Недействительная сессия' };
+      }
+      const product = productDB.getById(data.id);
+      if (!product) {
+        return { error: 'Товар не найден' };
+      }
+      if (product.sellerId !== session.userId) {
+        return { error: 'Нет прав для редактирования' };
+      }
+
+      const updated = productDB.update(data.id, {
+        name: data.name,
+        price: data.price,
+        image: data.image,
+        category: data.category,
+        description: data.description,
+        ulys: data.ulys,
+        stock: data.stock,
+        discountPercent: data.discountPercent,
+        features: data.features,
+      });
+      return { success: true, product: updated };
+    } catch (error) {
+      return { error: 'Ошибка при обновлении товара' };
     }
   },
 
@@ -179,6 +226,35 @@ export const api = {
       }
     } catch (error) {
       return { error: 'Ошибка при удалении товара' };
+    }
+  },
+
+  // Promocodes
+  async getPromocodes() {
+    try {
+      const promos = promoDB.getAll();
+      return { success: true, promos };
+    } catch (error) {
+      return { error: 'Ошибка при загрузке промокодов', promos: [] as Promo[] };
+    }
+  },
+
+  async createPromocode(data: PromoData) {
+    try {
+      if (!data.code.trim()) {
+        return { error: 'Введите название промокода' };
+      }
+      if (data.maxUses <= 0) {
+        return { error: 'Максимальное число использований должно быть больше 0' };
+      }
+
+      const result = promoDB.create({ code: data.code.trim(), maxUses: data.maxUses });
+      if ('error' in result) {
+        return { error: result.error };
+      }
+      return { success: true, promo: result };
+    } catch (error) {
+      return { error: 'Ошибка при создании промокода' };
     }
   },
 };

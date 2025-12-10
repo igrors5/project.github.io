@@ -18,12 +18,24 @@ export interface Product {
   sellerId?: string;
   ulys?: string; // Якутский улус
   createdAt?: string;
+  stock?: number;
+  sold?: number;
+  discountPercent?: number;
+  features?: string;
+}
+
+export interface Promo {
+  code: string;
+  maxUses: number;
+  used: number;
+  createdAt: string;
 }
 
 const DB_KEYS = {
   USERS: 'marketplace_users',
   PRODUCTS: 'marketplace_products',
   SESSIONS: 'marketplace_sessions',
+  PROMOS: 'marketplace_promos',
 };
 
 // Инициализация базы данных с начальными данными
@@ -43,6 +55,10 @@ export function initDB() {
         image: '/images/knife.jpg',
         category: 'Традиционные ремесла',
         createdAt: new Date().toISOString(),
+        stock: 20,
+        sold: 3,
+        discountPercent: 0,
+        features: '',
       },
       {
         id: 2,
@@ -51,6 +67,10 @@ export function initDB() {
         image: '/images/clothing.jpg',
         category: 'Одежда и текстиль',
         createdAt: new Date().toISOString(),
+        stock: 15,
+        sold: 5,
+        discountPercent: 10,
+        features: '',
       },
       {
         id: 3,
@@ -59,6 +79,10 @@ export function initDB() {
         image: '/images/khomus.jpg',
         category: 'Традиционные ремесла',
         createdAt: new Date().toISOString(),
+        stock: 30,
+        sold: 12,
+        discountPercent: 0,
+        features: '',
       },
       {
         id: 4,
@@ -67,6 +91,10 @@ export function initDB() {
         image: '/images/untы.jpg',
         category: 'Одежда и текстиль',
         createdAt: new Date().toISOString(),
+        stock: 8,
+        sold: 2,
+        discountPercent: 5,
+        features: '',
       },
       {
         id: 5,
@@ -75,6 +103,10 @@ export function initDB() {
         image: '/images/choron.jpg',
         category: 'Деревянные изделия',
         createdAt: new Date().toISOString(),
+        stock: 25,
+        sold: 4,
+        discountPercent: 0,
+        features: '',
       },
       {
         id: 6,
@@ -83,6 +115,10 @@ export function initDB() {
         image: '/images/alysы.jpg',
         category: 'Традиционные ремесла',
         createdAt: new Date().toISOString(),
+        stock: 40,
+        sold: 6,
+        discountPercent: 0,
+        features: '',
       },
       {
         id: 7,
@@ -91,6 +127,10 @@ export function initDB() {
         image: '/images/kharыskhal.jpg',
         category: 'Украшения',
         createdAt: new Date().toISOString(),
+        stock: 18,
+        sold: 3,
+        discountPercent: 0,
+        features: '',
       },
       {
         id: 8,
@@ -99,6 +139,10 @@ export function initDB() {
         image: '/images/ilin-kelin.jpg',
         category: 'Одежда и текстиль',
         createdAt: new Date().toISOString(),
+        stock: 14,
+        sold: 1,
+        discountPercent: 0,
+        features: '',
       },
       {
         id: 9,
@@ -107,6 +151,10 @@ export function initDB() {
         image: '/images/beseh.jpg',
         category: 'Украшения',
         createdAt: new Date().toISOString(),
+        stock: 60,
+        sold: 7,
+        discountPercent: 0,
+        features: '',
       },
     ];
     
@@ -130,6 +178,11 @@ export function initDB() {
   // Инициализация сессий
   if (!localStorage.getItem(DB_KEYS.SESSIONS)) {
     localStorage.setItem(DB_KEYS.SESSIONS, JSON.stringify([]));
+  }
+
+  // Инициализация промокодов
+  if (!localStorage.getItem(DB_KEYS.PROMOS)) {
+    localStorage.setItem(DB_KEYS.PROMOS, JSON.stringify([]));
   }
 }
 
@@ -208,6 +261,10 @@ export const productDB = {
       ...product,
       id: maxId + 1,
       createdAt: new Date().toISOString(),
+      stock: product.stock ?? 0,
+      sold: product.sold ?? 0,
+      discountPercent: product.discountPercent ?? 0,
+      features: product.features ?? '',
     };
     products.push(newProduct);
     localStorage.setItem(DB_KEYS.PRODUCTS, JSON.stringify(products));
@@ -253,6 +310,42 @@ export const sessionDB = {
     const sessions = this.getAll();
     const filtered = sessions.filter(s => s.token !== token);
     localStorage.setItem(DB_KEYS.SESSIONS, JSON.stringify(filtered));
+  },
+};
+
+// Работа с промокодами
+export const promoDB = {
+  getAll(): Promo[] {
+    const data = localStorage.getItem(DB_KEYS.PROMOS);
+    return data ? JSON.parse(data) : [];
+  },
+
+  create(promo: { code: string; maxUses: number }): Promo | { error: string } {
+    const promos = this.getAll();
+    const existing = promos.find(p => p.code.toLowerCase() === promo.code.toLowerCase());
+    if (existing) {
+      return { error: 'Промокод с таким названием уже существует' };
+    }
+
+    const newPromo: Promo = {
+      code: promo.code.toUpperCase(),
+      maxUses: promo.maxUses,
+      used: 0,
+      createdAt: new Date().toISOString(),
+    };
+    promos.push(newPromo);
+    localStorage.setItem(DB_KEYS.PROMOS, JSON.stringify(promos));
+    return newPromo;
+  },
+
+  incrementUsage(code: string): Promo | null {
+    const promos = this.getAll();
+    const index = promos.findIndex(p => p.code.toLowerCase() === code.toLowerCase());
+    if (index === -1) return null;
+    if (promos[index].used >= promos[index].maxUses) return null;
+    promos[index] = { ...promos[index], used: promos[index].used + 1 };
+    localStorage.setItem(DB_KEYS.PROMOS, JSON.stringify(promos));
+    return promos[index];
   },
 };
 

@@ -11,6 +11,9 @@ interface AddProductModalProps {
     category: string;
     description: string;
     ulys: string;
+    stock: number;
+    discountPercent: number;
+    features: string;
   }) => void;
 }
 
@@ -65,6 +68,9 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
   const [category, setCategory] = useState(categories[0]);
   const [description, setDescription] = useState('');
   const [ulys, setUlys] = useState('');
+  const [stock, setStock] = useState('0');
+  const [discountPercent, setDiscountPercent] = useState('0');
+  const [features, setFeatures] = useState('');
 
   if (!isOpen) return null;
 
@@ -77,6 +83,9 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
       category,
       description,
       ulys,
+      stock: Number(stock),
+      discountPercent: Number(discountPercent),
+      features,
     });
     resetForm();
   };
@@ -88,6 +97,9 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
     setCategory(categories[0]);
     setDescription('');
     setUlys('');
+    setStock('0');
+    setDiscountPercent('0');
+    setFeatures('');
   };
 
   const handleClose = () => {
@@ -134,6 +146,34 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
               />
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-700 mb-2">Остаток (лимит) *</label>
+                <input
+                  type="number"
+                  value={stock}
+                  onChange={(e) => setStock(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  required
+                  min="0"
+                  step="1"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 mb-2">Скидка, %</label>
+                <input
+                  type="number"
+                  value={discountPercent}
+                  onChange={(e) => setDiscountPercent(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  min="0"
+                  max="90"
+                  step="1"
+                />
+                <p className="text-xs text-gray-500 mt-1">Цена для покупателей будет снижена на указанный процент.</p>
+              </div>
+            </div>
+
             <div>
               <label className="block text-gray-700 mb-2">URL изображения</label>
               <input
@@ -169,6 +209,17 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                 rows={4}
                 placeholder="Расскажите о вашем товаре..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 mb-2">Характеристики (пишут пользователи)</label>
+              <textarea
+                value={features}
+                onChange={(e) => setFeatures(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                rows={3}
+                placeholder="Материалы, габариты, особенности..."
               />
             </div>
 

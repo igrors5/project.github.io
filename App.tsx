@@ -12,8 +12,9 @@ import { SellerDashboard } from './components/SellerDashboard';
 import { CompanyProfile } from './components/CompanyProfile';
 import { ProductsPage } from './components/ProductsPage';
 import { Chatbot } from './components/Chatbot';
+import { AdminPanel } from './components/AdminPanel';
 import { Award, Truck, BadgeCheck, Phone } from './components/Icons';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { api } from './utils/api';
 import { Product } from './utils/localDB';
 
@@ -87,10 +88,32 @@ export default function App() {
   const [isCompanyProfileOpen, setIsCompanyProfileOpen] = useState(false);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [sellerProducts, setSellerProducts] = useState<any[]>([]);
+  const [promos, setPromos] = useState<any[]>([]);
+  const [isSeller, setIsSeller] = useState(false);
+  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
   // Load products from server
   useEffect(() => {
     loadProducts();
+    loadPromos();
+  }, []);
+
+  // Restore session on reload
+  useEffect(() => {
+    const restoreSession = async () => {
+      const storedToken = localStorage.getItem('accessToken');
+      if (!storedToken) return;
+      setAccessToken(storedToken);
+      const profile = await api.getProfile(storedToken);
+      if (profile.success) {
+        setUser(profile.user);
+        await loadSellerProducts();
+      } else {
+        localStorage.removeItem('accessToken');
+        setAccessToken(null);
+      }
+    };
+    restoreSession();
   }, []);
 
   // Load seller products when user is logged in
@@ -130,6 +153,13 @@ export default function App() {
     }
   };
 
+  const loadPromos = async () => {
+    const response = await api.getPromocodes();
+    if (response.success) {
+      setPromos(response.promos);
+    }
+  };
+
   const showToast = (message: string, type: 'success' | 'error' | 'info') => {
     const id = toastIdCounter++;
     setToasts(prev => [...prev, { id, message, type }]);
@@ -154,6 +184,7 @@ export default function App() {
 
     if (response.session?.access_token) {
       setAccessToken(response.session.access_token);
+      localStorage.setItem('accessToken', response.session.access_token);
       const profileData = await api.getProfile(response.session.access_token);
       if (profileData.success) {
         setUser(profileData.user);
@@ -183,6 +214,7 @@ export default function App() {
     }
     setUser(null);
     setAccessToken(null);
+    localStorage.removeItem('accessToken');
     toast.success('Вы вышли из системы');
   };
 
@@ -193,6 +225,8 @@ export default function App() {
     category: string;
     description: string;
     ulys: string;
+    stock: number;
+    discountPercent: number;
   }) => {
     if (!accessToken) {
       toast.error('Необходимо войти в систему');
@@ -211,6 +245,30 @@ export default function App() {
       await loadProducts();
       await loadSellerProducts();
     }
+  };
+
+  const handleUpdateProduct = async (productId: number, data: {
+    name: string;
+    price: number;
+    image: string;
+    category: string;
+    description: string;
+    ulys: string;
+    stock: number;
+    discountPercent: number;
+  }) => {
+    if (!accessToken) {
+      toast.error('Необходимо войти в систему');
+      return;
+    }
+    const response = await api.updateProduct({ id: productId, ...data }, accessToken);
+    if (response.error) {
+      toast.error(response.error);
+      return;
+    }
+    toast.success('Товар обновлен');
+    await loadProducts();
+    await loadSellerProducts();
   };
 
   const handleDeleteProduct = async (productId: number) => {
@@ -234,6 +292,12 @@ export default function App() {
 
   const addToCart = (product: Product, quantity: number = 1) => {
     setCartItems(prev => {
+      const existingQuantity = prev.find(item => item.id === product.id)?.quantity || 0;
+      const available = product.stock ?? Infinity;
+      if (existingQuantity + quantity > available) {
+        toast.error('Недостаточно товара на складе');
+        return prev;
+      }
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
         toast.success('Количество товара увеличено!');
@@ -311,6 +375,60 @@ export default function App() {
       setIsCartOpen(false);
     }, 1500);
   };
+
+  const handleRecoveryRequest = ({
+    email,
+    hasNoEmail,
+    comment,
+  }: {
+    email?: string;
+    hasNoEmail: boolean;
+    comment?: string;
+  }) => {
+    if (!email && !hasNoEmail) {
+      toast.error('Укажите email или отметьте отсутствие доступа к почте');
+      return;
+    }
+
+    const details = [
+      email ? `email: ${email}` : null,
+      hasNoEmail ? 'нет доступа к почте' : null,
+      comment ? `комментарий: ${comment}` : null,
+    ]
+      .filter(Boolean)
+      .join('; ');
+
+    toast.info(`Запрос на восстановление отправлен (${details}). Мы свяжемся и подскажем, как восстановить доступ.`);
+    setIsAuthModalOpen(false);
+  };
+
+  const handleMakeSeller = () => {
+    setIsSeller(true);
+    toast.success('Режим продавца включен');
+  };
+
+  const handleCreatePromo = async (data: { code: string; maxUses: number }) => {
+    const response = await api.createPromocode(data);
+    if (response.error) {
+      toast.error(response.error);
+      return;
+    }
+    toast.success('Промокод создан');
+    if (response.promo) {
+      setPromos((prev) => [...prev, response.promo]);
+    } else {
+      await loadPromos();
+    }
+  };
+
+  const salesData = useMemo(
+    () =>
+      sellerProducts.map((p) => ({
+        name: p.name,
+        sales: (p.price % 7) + 3, // простая демонстрация статистики
+      })),
+    [sellerProducts],
+  );
 
 
   const handleProfileClick = () => {
@@ -401,6 +519,9 @@ export default function App() {
           onAuthClick={() => setIsAuthModalOpen(true)}
           onProfileClick={handleProfileClick}
           onLogout={handleLogout}
+          isAdmin={isSeller}
+          onAdminClick={() => setIsAdminPanelOpen(true)}
+          onMakeAdmin={handleMakeSeller}
         />
       )}
       
@@ -560,6 +681,7 @@ export default function App() {
         onClose={() => setIsAuthModalOpen(false)}
         onLogin={handleLogin}
         onSignup={handleSignup}
+        onRecoveryRequest={handleRecoveryRequest}
       />
 
       <AddProductModal
@@ -581,12 +703,23 @@ export default function App() {
           setIsCompanyProfileOpen(true);
         }}
         onDeleteProduct={handleDeleteProduct}
+        salesData={salesData}
+        onMakeAdmin={handleMakeSeller}
+        isSeller={isSeller}
+          onUpdateProduct={handleUpdateProduct}
       />
 
       <CompanyProfile
         isOpen={isCompanyProfileOpen}
         onClose={() => setIsCompanyProfileOpen(false)}
         accessToken={accessToken}
+      />
+
+      <AdminPanel
+        isOpen={isAdminPanelOpen && isSeller}
+        onClose={() => setIsAdminPanelOpen(false)}
+        promos={promos}
+        onCreatePromo={handleCreatePromo}
       />
 
       <Chatbot />

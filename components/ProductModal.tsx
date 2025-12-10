@@ -11,6 +11,10 @@ interface ProductModalProps {
     price: number;
     image: string;
     category: string;
+    stock?: number;
+    discountPercent?: number;
+    features?: string;
+    description?: string;
   };
   onAddToCart: (quantity: number) => void;
   onToggleWishlist: () => void;
@@ -82,40 +86,41 @@ export function ProductModal({
             <div className="flex flex-col">
               <h3 className="text-gray-900 mb-4">{product.name}</h3>
               <div className="text-indigo-600 text-3xl mb-6">
-                {product.price.toLocaleString()} ₽
+                {product.discountPercent && product.discountPercent > 0 ? (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-indigo-600">
+                      {Math.round(product.price * (1 - product.discountPercent / 100)).toLocaleString()} ₽
+                    </span>
+                    <span className="text-sm text-gray-500 line-through">
+                      {product.price.toLocaleString()} ₽
+                    </span>
+                    <span className="text-sm text-amber-600">-{product.discountPercent}%</span>
+                  </div>
+                ) : (
+                  <span>{product.price.toLocaleString()} ₽</span>
+                )}
+                {product.stock !== undefined && (
+                  <p className="text-sm text-gray-500">Остаток: {product.stock}</p>
+                )}
               </div>
 
-              <div className="mb-6">
-                <h4 className="text-gray-700 mb-2">Описание</h4>
-                <p className="text-gray-600">
-                  Это уникальное изделие ручной работы от местных якутских мастеров. 
-                  Каждый предмет изготовлен с особым вниманием к деталям и традициям, 
-                  передающимся из поколения в поколение. Аутентичный дизайн и высокое 
-                  качество материалов гарантируют долговечность и уникальность каждого изделия.
-                </p>
-              </div>
+              {product.description && (
+                <div className="mb-6">
+                  <h4 className="text-gray-700 mb-2">Описание</h4>
+                  <p className="text-gray-600 whitespace-pre-wrap">
+                    {product.description}
+                  </p>
+                </div>
+              )}
 
-              <div className="mb-6">
-                <h4 className="text-gray-700 mb-2">Характеристики</h4>
-                <ul className="space-y-2 text-gray-600">
-                  <li className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-indigo-600 rounded-full"></span>
-                    Ручная работа местных мастеров
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-indigo-600 rounded-full"></span>
-                    Аутентичные материалы
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-indigo-600 rounded-full"></span>
-                    Гарантия качества
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-indigo-600 rounded-full"></span>
-                    Доставка по всей России
-                  </li>
-                </ul>
-              </div>
+              {product.features && (
+                <div className="mb-6">
+                  <h4 className="text-gray-700 mb-2">Характеристики</h4>
+                  <p className="text-gray-600 whitespace-pre-wrap">
+                    {product.features}
+                  </p>
+                </div>
+              )}
 
               <div className="mb-6">
                 <h4 className="text-gray-700 mb-3">Количество</h4>
