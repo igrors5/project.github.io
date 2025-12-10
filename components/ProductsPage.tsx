@@ -1,5 +1,6 @@
 import { ProductCard } from './ProductCard';
 import { ProductFilters } from './ProductFilters';
+import { ShoppingCart, User } from './Icons';
 import { Product } from '../utils/localDB';
 
 interface ProductsPageProps {
@@ -10,6 +11,8 @@ interface ProductsPageProps {
   selectedUlys: string | null;
   sortBy: 'newest' | 'oldest' | 'none';
   wishlist: number[];
+  cartCount: number;
+  user: { name: string; email: string } | null;
   onCategoryChange: (category: string | null) => void;
   onUlysChange: (ulys: string | null) => void;
   onSortChange: (sort: 'newest' | 'oldest' | 'none') => void;
@@ -18,6 +21,10 @@ interface ProductsPageProps {
   onToggleWishlist: (productId: number) => void;
   onProductClick: (product: Product) => void;
   onBack: () => void;
+  onCartClick: () => void;
+  onAuthClick: () => void;
+  onProfileClick?: () => void;
+  onLogout?: () => void;
 }
 
 export function ProductsPage({
@@ -28,6 +35,8 @@ export function ProductsPage({
   selectedUlys,
   sortBy,
   wishlist,
+  cartCount,
+  user,
   onCategoryChange,
   onUlysChange,
   onSortChange,
@@ -36,6 +45,10 @@ export function ProductsPage({
   onToggleWishlist,
   onProductClick,
   onBack,
+  onCartClick,
+  onAuthClick,
+  onProfileClick,
+  onLogout,
 }: ProductsPageProps) {
   // Filter and sort products
   let filteredProducts = products;
@@ -68,6 +81,51 @@ export function ProductsPage({
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Top bar with site name, cart and profile */}
+        <div className="mb-6 bg-white shadow-sm rounded-lg px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+          <div className="text-xl font-semibold text-indigo-600">Ykt Product</div>
+          <div className="flex items-center gap-3">
+            {user ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={onProfileClick}
+                  className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition"
+                >
+                  <User className="w-5 h-5" />
+                  <span className="text-sm">{user.name}</span>
+                </button>
+                <button
+                  onClick={onCartClick}
+                  className="relative flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  <span className="text-sm">Корзина</span>
+                  {cartCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-indigo-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {cartCount}
+                    </span>
+                  )}
+                </button>
+                {onLogout && (
+                  <button
+                    onClick={onLogout}
+                    className="text-sm text-red-600 hover:text-red-700 px-2 py-1 rounded-md transition"
+                  >
+                    Выйти
+                  </button>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={onAuthClick}
+                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition"
+              >
+                Войти
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Header */}
         <div className="mb-8">
           <button
@@ -110,6 +168,7 @@ export function ProductsPage({
                 price={product.price}
                 image={product.image}
                 category={product.category}
+                  quantity={product.quantity}
                 onAddToCart={() => onAddToCart(product)}
                 onToggleWishlist={() => onToggleWishlist(product.id)}
                 isInWishlist={wishlist.includes(product.id)}

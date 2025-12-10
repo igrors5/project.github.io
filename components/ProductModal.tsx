@@ -1,21 +1,12 @@
 import { X, ShoppingCart, Heart, Minus, Plus } from './Icons';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { Product } from '../utils/localDB';
 
 interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  product: {
-    id: number;
-    name: string;
-    price: number;
-    image: string;
-    category: string;
-    stock?: number;
-    discountPercent?: number;
-    features?: string;
-    description?: string;
-  };
+  product: Product;
   onAddToCart: (quantity: number) => void;
   onToggleWishlist: () => void;
   isInWishlist: boolean;
@@ -30,16 +21,27 @@ export function ProductModal({
   isInWishlist 
 }: ProductModalProps) {
   const [quantity, setQuantity] = useState(1);
+  const available = useMemo(() => {
+    if (product.stock !== undefined) return product.stock;
+    if (product.quantity !== undefined) return product.quantity;
+    return Infinity;
+  }, [product.stock, product.quantity]);
 
   if (!isOpen) return null;
 
   const handleAddToCart = () => {
-    onAddToCart(quantity);
+    if (available <= 0) return;
+    const safeQty = Math.max(1, Math.min(quantity, available === Infinity ? quantity : available));
+    onAddToCart(safeQty);
     onClose();
   };
 
   const incrementQuantity = () => {
-    setQuantity(prev => prev + 1);
+    setQuantity(prev => {
+      const next = prev + 1;
+      if (available === Infinity) return next;
+      return Math.min(next, available);
+    });
   };
 
   const decrementQuantity = () => {
@@ -104,23 +106,52 @@ export function ProductModal({
                 )}
               </div>
 
-              {product.description && (
-                <div className="mb-6">
-                  <h4 className="text-gray-700 mb-2">Описание</h4>
-                  <p className="text-gray-600 whitespace-pre-wrap">
-                    {product.description}
-                  </p>
-                </div>
-              )}
+              <div className="text-sm text-gray-600 mb-4">
+                {product.stock !== undefined
+                  ? `Остаток на складе: ${product.stock}`
+                  : product.quantity !== undefined
+                  ? `В наличии: ${product.quantity}`
+                  : 'Количество не указано'}
+              </div>
+
+              <div className="mb-6">
+                <h4 className="text-gray-700 mb-2">Описание</h4>
+                <p className="text-gray-600 whitespace-pre-wrap">
+                  {product.description?.trim() || 'Описание не указано'}
+                </p>
+              </div>
 
               {product.features && (
                 <div className="mb-6">
-                  <h4 className="text-gray-700 mb-2">Характеристики</h4>
+                  <h4 className="text-gray-700 mb-2">Особенности</h4>
                   <p className="text-gray-600 whitespace-pre-wrap">
                     {product.features}
                   </p>
                 </div>
               )}
+
+              <div className="mb-6">
+                <h4 className="text-gray-700 mb-3">Характеристики</h4>
+                {(() => {
+                  const characteristics = product.characteristics
+                    ?.split(/\r?\n/)
+                    .map(c => c.trim())
+                    .filter(Boolean);
+                  if (characteristics && characteristics.length > 0) {
+                    return (
+                      <ul className="space-y-2 text-gray-600">
+                        {characteristics.map((item, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <span className="w-2 h-2 bg-indigo-600 rounded-full mt-2" />
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  }
+                  return <p className="text-gray-500">Характеристики не указаны</p>;
+                })()}
+              </div>
 
               <div className="mb-6">
                 <h4 className="text-gray-700 mb-3">Количество</h4>
@@ -144,10 +175,15 @@ export function ProductModal({
               <div className="mt-auto space-y-3">
                 <button
                   onClick={handleAddToCart}
-                  className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                  disabled={available !== Infinity && available <= 0}
+                  className={`w-full py-3 rounded-lg transition flex items-center justify-center gap-2 ${
+                    available !== Infinity && available <= 0
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                  }`}
                 >
                   <ShoppingCart className="w-5 h-5" />
-                  Добавить в корзину
+                  {available !== Infinity && available <= 0 ? 'Нет в наличии' : 'Добавить в корзину'}
                 </button>
                 <button
                   onClick={onClose}

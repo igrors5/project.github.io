@@ -6,6 +6,7 @@ interface ProductCardProps {
   price: number;
   image: string;
   category: string;
+  quantity?: number;
   onAddToCart: () => void;
   onToggleWishlist: () => void;
   isInWishlist: boolean;
@@ -21,6 +22,7 @@ export function ProductCard({
   price, 
   image, 
   category, 
+  quantity,
   onAddToCart, 
   onToggleWishlist, 
   isInWishlist,
@@ -42,7 +44,9 @@ export function ProductCard({
 
   const hasDiscount = !!discountPercent && discountPercent > 0;
   const discountedPrice = hasDiscount ? Math.round(price * (1 - discountPercent / 100)) : price;
-  const outOfStock = stock !== undefined && stock <= 0;
+  const outOfStock =
+    (stock !== undefined && stock <= 0) ||
+    (quantity !== undefined && quantity <= 0);
 
   return (
     <div 
@@ -107,8 +111,11 @@ export function ProductCard({
             className={`bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition flex items-center gap-2 ${outOfStock ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
             <ShoppingCart className="w-4 h-4" />
-            <span>{outOfStock ? 'Нет' : 'В корзину'}</span>
+            <span>{outOfStock ? 'Нет в наличии' : 'В корзину'}</span>
           </button>
+        </div>
+        <div className="text-sm text-gray-600">
+          {quantity !== undefined ? `В наличии: ${quantity}` : 'Количество не указано'}
         </div>
       </div>
     </div>

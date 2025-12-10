@@ -14,6 +14,9 @@ interface Product {
   stock?: number;
   discountPercent?: number;
   features?: string;
+  characteristics?: string;
+  quantity?: number;
+  hidden?: boolean;
 }
 
 interface SellerDashboardProps {
@@ -39,21 +42,20 @@ interface SellerDashboardProps {
   }) => void;
 }
 
-export function SellerDashboard({ isOpen, onClose, products, onAddProduct, onCompanyProfile, onDeleteProduct, salesData = [], onMakeAdmin, isSeller, onUpdateProduct }: SellerDashboardProps) {
+export function SellerDashboard({
+  isOpen,
+  onClose,
+  products,
+  onAddProduct,
+  onCompanyProfile,
+  onDeleteProduct,
+  salesData = [],
+  onMakeAdmin,
+  isSeller,
+  onUpdateProduct,
+}: SellerDashboardProps) {
   const [editProductId, setEditProductId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({
-    name: '',
-    price: '',
-    image: '',
-    category: '',
-    description: '',
-    ulys: '',
-    stock: '',
-    discountPercent: '',
-    features: '',
-  });
-
-  const [newProductForm, setNewProductForm] = useState({
     name: '',
     price: '',
     image: '',
@@ -105,130 +107,6 @@ export function SellerDashboard({ isOpen, onClose, products, onAddProduct, onCom
         </div>
 
         <div className="mb-8">
-          <h3 className="text-gray-800 mb-3">Создать товар</h3>
-          <form
-            className="space-y-3"
-            onSubmit={(e) => {
-              e.preventDefault();
-              onAddProduct();
-              if (onUpdateProduct) {
-                // no-op
-              }
-            }}
-          >
-            <div className="grid md:grid-cols-2 gap-3">
-              <input
-                required
-                placeholder="Название"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={newProductForm.name}
-                onChange={(e) => setNewProductForm({ ...newProductForm, name: e.target.value })}
-              />
-              <input
-                required
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="Цена"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={newProductForm.price}
-                onChange={(e) => setNewProductForm({ ...newProductForm, price: e.target.value })}
-              />
-            </div>
-            <div className="grid md:grid-cols-2 gap-3">
-              <input
-                placeholder="URL изображения"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={newProductForm.image}
-                onChange={(e) => setNewProductForm({ ...newProductForm, image: e.target.value })}
-              />
-              <input
-                placeholder="Категория"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={newProductForm.category}
-                onChange={(e) => setNewProductForm({ ...newProductForm, category: e.target.value })}
-                required
-              />
-            </div>
-            <div className="grid md:grid-cols-2 gap-3">
-              <input
-                placeholder="Улус"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={newProductForm.ulys}
-                onChange={(e) => setNewProductForm({ ...newProductForm, ulys: e.target.value })}
-              />
-              <input
-                placeholder="Остаток (лимит)"
-                type="number"
-                min={0}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={newProductForm.stock}
-                onChange={(e) => setNewProductForm({ ...newProductForm, stock: e.target.value })}
-              />
-            </div>
-            <div className="grid md:grid-cols-2 gap-3">
-              <textarea
-                placeholder="Описание (люди пишут сами)"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[80px]"
-                value={newProductForm.description}
-                onChange={(e) => setNewProductForm({ ...newProductForm, description: e.target.value })}
-              />
-              <textarea
-                placeholder="Характеристики (люди пишут сами)"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[80px]"
-                value={newProductForm.features}
-                onChange={(e) => setNewProductForm({ ...newProductForm, features: e.target.value })}
-              />
-            </div>
-            <div className="grid md:grid-cols-2 gap-3">
-              <input
-                placeholder="Скидка, %"
-                type="number"
-                min={0}
-                max={90}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={newProductForm.discountPercent}
-                onChange={(e) => setNewProductForm({ ...newProductForm, discountPercent: e.target.value })}
-              />
-            </div>
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (!onAddProduct) return;
-                  onAddProduct({
-                    name: newProductForm.name,
-                    price: Number(newProductForm.price),
-                    image: newProductForm.image,
-                    category: newProductForm.category,
-                    description: newProductForm.description,
-                    ulys: newProductForm.ulys,
-                    stock: Number(newProductForm.stock || 0),
-                    discountPercent: Number(newProductForm.discountPercent || 0),
-                    features: newProductForm.features,
-                  });
-                  setNewProductForm({
-                    name: '',
-                    price: '',
-                    image: '',
-                    category: '',
-                    description: '',
-                    ulys: '',
-                    stock: '',
-                    discountPercent: '',
-                    features: '',
-                  });
-                }}
-                className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition"
-              >
-                Сохранить товар
-              </button>
-            </div>
-          </form>
-        </div>
-
-        <div className="mb-8">
           <h3 className="text-gray-800 mb-3">Продажи по товарам</h3>
           {salesData.length === 0 ? (
             <div className="bg-gray-50 rounded-lg p-4 text-gray-600 text-sm">Нет данных по продажам.</div>
@@ -260,20 +138,22 @@ export function SellerDashboard({ isOpen, onClose, products, onAddProduct, onCom
             <div className="bg-gray-50 rounded-lg p-4 text-gray-600 text-sm">Нет активных скидок.</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {products.filter(p => p.discountPercent && p.discountPercent > 0 && (p.stock ?? 0) > 0).map(p => (
-                <div key={p.id} className="border border-amber-200 rounded-lg p-4 bg-amber-50">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-900 font-semibold">{p.name}</p>
-                      <p className="text-sm text-gray-600">Скидка: {p.discountPercent}%</p>
+              {products
+                .filter(p => p.discountPercent && p.discountPercent > 0 && (p.stock ?? 0) > 0)
+                .map(p => (
+                  <div key={p.id} className="border border-amber-200 rounded-lg p-4 bg-amber-50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-gray-900 font-semibold">{p.name}</p>
+                        <p className="text-sm text-gray-600">Скидка: {p.discountPercent}%</p>
+                      </div>
+                      <span className="text-indigo-600 font-semibold">
+                        {Math.round(p.price * (1 - (p.discountPercent ?? 0) / 100)).toLocaleString()} ₽
+                      </span>
                     </div>
-                    <span className="text-indigo-600 font-semibold">
-                      {Math.round(p.price * (1 - (p.discountPercent ?? 0) / 100)).toLocaleString()} ₽
-                    </span>
+                    <p className="text-xs text-gray-500 mt-1">Остаток: {p.stock ?? 0}</p>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Остаток: {p.stock ?? 0}</p>
-                </div>
-              ))}
+                ))}
             </div>
           )}
         </div>
@@ -302,45 +182,65 @@ export function SellerDashboard({ isOpen, onClose, products, onAddProduct, onCom
                       <h4 className="text-gray-800 mb-1">{product.name}</h4>
                       <p className="text-indigo-600 mb-2">{product.price.toLocaleString()} ₽</p>
                       <p className="text-gray-500 text-sm">{product.category}</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {product.stock !== undefined
+                          ? `Остаток: ${product.stock}`
+                          : product.quantity !== undefined
+                          ? `В наличии: ${product.quantity}`
+                          : 'Количество не указано'}
+                      </p>
+                      {product.hidden && (
+                        <span className="inline-block mt-1 text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                          Скрыт
+                        </span>
+                      )}
+                      {product.discountPercent && product.discountPercent > 0 && (
+                        <span className="inline-block mt-1 text-xs text-amber-700 bg-amber-100 px-2 py-1 rounded">
+                          Скидка {product.discountPercent}%
+                        </span>
+                      )}
                     </div>
                   </div>
                   {product.description && (
                     <p className="text-gray-600 text-sm mt-3 line-clamp-2">{product.description}</p>
                   )}
-                  {onDeleteProduct && (
-                    <button
-                      onClick={() => {
-                        if (window.confirm(`Вы уверены, что хотите удалить товар "${product.name}"?`)) {
-                          onDeleteProduct(product.id);
-                        }
-                      }}
-                      className="absolute top-4 right-4 bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition"
-                      title="Удалить товар"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
-                  {onUpdateProduct && (
-                    <button
-                      onClick={() => {
-                        setEditProductId(product.id);
-                        setEditForm({
-                          name: product.name,
-                          price: String(product.price),
-                          image: product.image,
-                          category: product.category,
-                          description: product.description || '',
-                          ulys: product.ulys || '',
-                          stock: String(product.stock ?? 0),
-                          discountPercent: String(product.discountPercent ?? 0),
-                        });
-                      }}
-                      className="absolute top-4 right-16 bg-indigo-50 text-indigo-700 px-3 py-1 rounded-lg hover:bg-indigo-100 transition text-sm"
-                      title="Редактировать"
-                    >
-                      Редактировать
-                    </button>
-                  )}
+                  <div className="absolute top-4 right-4 flex gap-2">
+                    {onDeleteProduct && (
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Вы уверены, что хотите удалить товар "${product.name}"?`)) {
+                            onDeleteProduct(product.id);
+                          }
+                        }}
+                        className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition"
+                        title="Удалить товар"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                    {onUpdateProduct && (
+                      <button
+                        onClick={() => {
+                          setEditProductId(product.id);
+                          setEditForm({
+                            name: product.name,
+                            price: String(product.price),
+                            image: product.image,
+                            category: product.category,
+                            description: product.description || '',
+                            ulys: product.ulys || '',
+                            stock: String(product.stock ?? 0),
+                            discountPercent: String(product.discountPercent ?? 0),
+                            features: product.features || '',
+                          });
+                        }}
+                        className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-lg hover:bg-indigo-100 transition text-sm"
+                        title="Редактировать"
+                      >
+                        Редактировать
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -366,6 +266,7 @@ export function SellerDashboard({ isOpen, onClose, products, onAddProduct, onCom
                     ulys: editForm.ulys,
                     stock: Number(editForm.stock),
                     discountPercent: Number(editForm.discountPercent),
+                    features: editForm.features,
                   });
                 }}
               >
@@ -453,6 +354,15 @@ export function SellerDashboard({ isOpen, onClose, products, onAddProduct, onCom
                     />
                   </div>
                 </div>
+                <div>
+                  <label className="block text-gray-700 mb-2">Особенности / характеристики</label>
+                  <textarea
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    value={editForm.features}
+                    onChange={(e) => setEditForm({ ...editForm, features: e.target.value })}
+                    rows={3}
+                  />
+                </div>
                 <div className="flex gap-3">
                   <button
                     type="submit"
@@ -476,3 +386,4 @@ export function SellerDashboard({ isOpen, onClose, products, onAddProduct, onCom
     </div>
   );
 }
+

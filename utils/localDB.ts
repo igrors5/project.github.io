@@ -15,6 +15,9 @@ export interface Product {
   image: string;
   category: string;
   description?: string;
+  characteristics?: string;
+  quantity?: number;
+  hidden?: boolean;
   sellerId?: string;
   ulys?: string; // Якутский улус
   createdAt?: string;
@@ -54,6 +57,8 @@ export function initDB() {
         price: 4500,
         image: '/images/knife.jpg',
         category: 'Традиционные ремесла',
+        quantity: 10,
+        hidden: false,
         createdAt: new Date().toISOString(),
         stock: 20,
         sold: 3,
@@ -66,6 +71,8 @@ export function initDB() {
         price: 12000,
         image: '/images/clothing.jpg',
         category: 'Одежда и текстиль',
+        quantity: 8,
+        hidden: false,
         createdAt: new Date().toISOString(),
         stock: 15,
         sold: 5,
@@ -78,6 +85,8 @@ export function initDB() {
         price: 5500,
         image: '/images/khomus.jpg',
         category: 'Традиционные ремесла',
+        quantity: 15,
+        hidden: false,
         createdAt: new Date().toISOString(),
         stock: 30,
         sold: 12,
@@ -90,6 +99,8 @@ export function initDB() {
         price: 8000,
         image: '/images/untы.jpg',
         category: 'Одежда и текстиль',
+        quantity: 6,
+        hidden: false,
         createdAt: new Date().toISOString(),
         stock: 8,
         sold: 2,
@@ -102,6 +113,8 @@ export function initDB() {
         price: 5000,
         image: '/images/choron.jpg',
         category: 'Деревянные изделия',
+        quantity: 12,
+        hidden: false,
         createdAt: new Date().toISOString(),
         stock: 25,
         sold: 4,
@@ -114,6 +127,8 @@ export function initDB() {
         price: 3500,
         image: '/images/alysы.jpg',
         category: 'Традиционные ремесла',
+        quantity: 20,
+        hidden: false,
         createdAt: new Date().toISOString(),
         stock: 40,
         sold: 6,
@@ -126,6 +141,8 @@ export function initDB() {
         price: 6800,
         image: '/images/kharыskhal.jpg',
         category: 'Украшения',
+        quantity: 9,
+        hidden: false,
         createdAt: new Date().toISOString(),
         stock: 18,
         sold: 3,
@@ -138,6 +155,8 @@ export function initDB() {
         price: 9500,
         image: '/images/ilin-kelin.jpg',
         category: 'Одежда и текстиль',
+        quantity: 7,
+        hidden: false,
         createdAt: new Date().toISOString(),
         stock: 14,
         sold: 1,
@@ -150,6 +169,8 @@ export function initDB() {
         price: 2500,
         image: '/images/beseh.jpg',
         category: 'Украшения',
+        quantity: 18,
+        hidden: false,
         createdAt: new Date().toISOString(),
         stock: 60,
         sold: 7,
@@ -260,6 +281,8 @@ export const productDB = {
     const newProduct: Product = {
       ...product,
       id: maxId + 1,
+      quantity: product.quantity ?? 0,
+      hidden: product.hidden ?? false,
       createdAt: new Date().toISOString(),
       stock: product.stock ?? 0,
       sold: product.sold ?? 0,

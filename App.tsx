@@ -18,6 +18,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { api } from './utils/api';
 import { Product } from './utils/localDB';
 
+const AUTH_TOKEN_KEY = 'accessToken';
+
 
 const features = [
   {
@@ -101,7 +103,7 @@ export default function App() {
   // Restore session on reload
   useEffect(() => {
     const restoreSession = async () => {
-      const storedToken = localStorage.getItem('accessToken');
+      const storedToken = localStorage.getItem(AUTH_TOKEN_KEY);
       if (!storedToken) return;
       setAccessToken(storedToken);
       const profile = await api.getProfile(storedToken);
@@ -109,7 +111,7 @@ export default function App() {
         setUser(profile.user);
         await loadSellerProducts();
       } else {
-        localStorage.removeItem('accessToken');
+        localStorage.removeItem(AUTH_TOKEN_KEY);
         setAccessToken(null);
       }
     };
@@ -184,7 +186,7 @@ export default function App() {
 
     if (response.session?.access_token) {
       setAccessToken(response.session.access_token);
-      localStorage.setItem('accessToken', response.session.access_token);
+      localStorage.setItem(AUTH_TOKEN_KEY, response.session.access_token);
       const profileData = await api.getProfile(response.session.access_token);
       if (profileData.success) {
         setUser(profileData.user);
@@ -214,7 +216,7 @@ export default function App() {
     }
     setUser(null);
     setAccessToken(null);
-    localStorage.removeItem('accessToken');
+    localStorage.removeItem(AUTH_TOKEN_KEY);
     toast.success('Вы вышли из системы');
   };
 
@@ -224,6 +226,8 @@ export default function App() {
     image: string;
     category: string;
     description: string;
+    characteristics: string;
+    quantity: number;
     ulys: string;
     stock: number;
     discountPercent: number;
@@ -256,6 +260,7 @@ export default function App() {
     ulys: string;
     stock: number;
     discountPercent: number;
+    features: string;
   }) => {
     if (!accessToken) {
       toast.error('Необходимо войти в систему');
@@ -291,6 +296,10 @@ export default function App() {
   };
 
   const addToCart = (product: Product, quantity: number = 1) => {
+    if (product.quantity !== undefined && product.quantity <= 0) {
+      toast.error('Товар недоступен');
+      return;
+    }
     setCartItems(prev => {
       const existingQuantity = prev.find(item => item.id === product.id)?.quantity || 0;
       const available = product.stock ?? Infinity;
@@ -301,14 +310,18 @@ export default function App() {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
         toast.success('Количество товара увеличено!');
-        return prev.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
+        return prev.map(item => {
+          if (item.id !== product.id) return item;
+          const newQty = item.quantity + quantity;
+          if (product.quantity !== undefined) {
+            return { ...item, quantity: Math.min(newQty, product.quantity) };
+          }
+          return { ...item, quantity: newQty };
+        });
       }
       toast.success('Товар добавлен в корзину!');
-      return [...prev, { ...product, quantity }];
+      const initialQty = product.quantity !== undefined ? Math.min(quantity, product.quantity) : quantity;
+      return [...prev, { ...product, quantity: initialQty }];
     });
   };
 
@@ -476,7 +489,11 @@ export default function App() {
 
 
   // Получаем уникальные категории
-  const availableCategories = Array.from(new Set(allProducts.map(p => p.category))).sort();
+  const availableCategories = Array.from(new Set(allProducts.map(p => p.category)));
+  if (!availableCategories.includes('Продукты питания')) {
+    availableCategories.push('Продукты питания');
+  }
+  availableCategories.sort();
 
   const handleResetFilters = () => {
     setSelectedCategory(null);
@@ -527,13 +544,15 @@ export default function App() {
       
       {currentPage === 'products' ? (
         <ProductsPage
-          products={allProducts}
+          products={allProducts.filter(p => !p.hidden)}
           categories={availableCategories}
           uluses={allUluses}
           selectedCategory={selectedCategory}
           selectedUlys={selectedUlys}
           sortBy={sortBy}
           wishlist={wishlist}
+          cartCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+          user={user}
           onCategoryChange={setSelectedCategory}
           onUlysChange={setSelectedUlys}
           onSortChange={setSortBy}
@@ -548,6 +567,10 @@ export default function App() {
             setSortBy('none');
             window.history.pushState({}, '', window.location.pathname);
           }}
+          onCartClick={() => setIsCartOpen(true)}
+          onAuthClick={() => setIsAuthModalOpen(true)}
+          onProfileClick={handleProfileClick}
+          onLogout={handleLogout}
         />
       ) : (
         <>
@@ -582,10 +605,11 @@ export default function App() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {(() => {
-              // Берем товары не из категории "Традиционные ремесла"
-              const nonCraftProducts = allProducts.filter(product => product.category !== 'Традиционные ремесла');
+              // Берем товары не из категории "Традиционные ремесла" и не скрытые
+              const visibleProducts = allProducts.filter(p => !p.hidden);
+              const nonCraftProducts = visibleProducts.filter(product => product.category !== 'Традиционные ремесла');
               // Берем один товар из категории "Традиционные ремесла" для добавления
-              const craftProduct = allProducts.find(product => product.category === 'Традиционные ремесла');
+              const craftProduct = visibleProducts.find(product => product.category === 'Традиционные ремесла');
               // Объединяем: сначала не-ремесла, потом один ремесленный
               const recommendedProducts = [...nonCraftProducts];
               if (craftProduct && recommendedProducts.length < 4) {
@@ -598,6 +622,7 @@ export default function App() {
                   price={product.price}
                   image={product.image}
                   category={product.category}
+                  quantity={product.quantity}
                   onAddToCart={() => addToCart(product)}
                   onToggleWishlist={() => toggleWishlist(product.id)}
                   isInWishlist={wishlist.includes(product.id)}
@@ -660,7 +685,7 @@ export default function App() {
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-        products={allProducts}
+        products={allProducts.filter(p => !p.hidden)}
         onAddToCart={addToCart}
         onProductClick={handleProductClick}
       />
@@ -706,7 +731,7 @@ export default function App() {
         salesData={salesData}
         onMakeAdmin={handleMakeSeller}
         isSeller={isSeller}
-          onUpdateProduct={handleUpdateProduct}
+        onUpdateProduct={handleUpdateProduct}
       />
 
       <CompanyProfile

@@ -24,19 +24,9 @@ interface ProductData {
   image?: string;
   category: string;
   description?: string;
+  characteristics?: string;
+  quantity?: number;
   ulys?: string;
-  stock?: number;
-  discountPercent?: number;
-  features?: string;
-}
-
-interface UpdateProductData extends ProductData {
-  id: number;
-}
-
-interface PromoData {
-  code: string;
-  maxUses: number;
 }
 
 // Генерация токена
@@ -142,12 +132,10 @@ export const api = {
         image: data.image || '',
         category: data.category,
         description: data.description,
+        characteristics: data.characteristics,
+        quantity: data.quantity ?? 0,
         ulys: data.ulys,
         sellerId: session.userId,
-        stock: data.stock ?? 0,
-        discountPercent: data.discountPercent ?? 0,
-        sold: 0,
-        features: data.features ?? '',
       });
 
       return { success: true, product };
@@ -226,35 +214,6 @@ export const api = {
       }
     } catch (error) {
       return { error: 'Ошибка при удалении товара' };
-    }
-  },
-
-  // Promocodes
-  async getPromocodes() {
-    try {
-      const promos = promoDB.getAll();
-      return { success: true, promos };
-    } catch (error) {
-      return { error: 'Ошибка при загрузке промокодов', promos: [] as Promo[] };
-    }
-  },
-
-  async createPromocode(data: PromoData) {
-    try {
-      if (!data.code.trim()) {
-        return { error: 'Введите название промокода' };
-      }
-      if (data.maxUses <= 0) {
-        return { error: 'Максимальное число использований должно быть больше 0' };
-      }
-
-      const result = promoDB.create({ code: data.code.trim(), maxUses: data.maxUses });
-      if ('error' in result) {
-        return { error: result.error };
-      }
-      return { success: true, promo: result };
-    } catch (error) {
-      return { error: 'Ошибка при создании промокода' };
     }
   },
 };
