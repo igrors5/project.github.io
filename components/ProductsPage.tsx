@@ -13,6 +13,7 @@ interface ProductsPageProps {
   wishlist: number[];
   cartCount: number;
   user: { name: string; email: string } | null;
+  isSeller?: boolean;
   onCategoryChange: (category: string | null) => void;
   onUlysChange: (ulys: string | null) => void;
   onSortChange: (sort: 'newest' | 'oldest' | 'none') => void;
@@ -25,6 +26,7 @@ interface ProductsPageProps {
   onAuthClick: () => void;
   onProfileClick?: () => void;
   onLogout?: () => void;
+  onAdminClick?: () => void;
 }
 
 export function ProductsPage({
@@ -37,6 +39,7 @@ export function ProductsPage({
   wishlist,
   cartCount,
   user,
+  isSeller,
   onCategoryChange,
   onUlysChange,
   onSortChange,
@@ -49,6 +52,7 @@ export function ProductsPage({
   onAuthClick,
   onProfileClick,
   onLogout,
+  onAdminClick,
 }: ProductsPageProps) {
   // Filter and sort products
   let filteredProducts = products;
@@ -87,6 +91,14 @@ export function ProductsPage({
           <div className="flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-2">
+                {isSeller && onAdminClick && (
+                  <button
+                    onClick={onAdminClick}
+                    className="px-3 py-2 text-xs font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-md transition"
+                  >
+                    Панель продавца
+                  </button>
+                )}
                 <button
                   onClick={onProfileClick}
                   className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition"

@@ -2,6 +2,8 @@ import { Plus, Trash2 } from './Icons';
 import { ChartContainer, ChartLegend, ChartTooltip, ChartTooltipContent } from './ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
 import { useState } from 'react';
+import { Promo } from '../utils/localDB';
+import { uluses as defaultUluses } from '../utils/uluses';
 
 interface Product {
   id: number;
@@ -40,6 +42,9 @@ interface SellerDashboardProps {
     discountPercent: number;
     features: string;
   }) => void;
+  promos?: Promo[];
+  onCreatePromo?: (data: { code: string; maxUses: number }) => void;
+  uluses?: string[];
 }
 
 export function SellerDashboard({
@@ -53,6 +58,9 @@ export function SellerDashboard({
   onMakeAdmin,
   isSeller,
   onUpdateProduct,
+  promos = [],
+  onCreatePromo,
+  uluses = defaultUluses,
 }: SellerDashboardProps) {
   const [editProductId, setEditProductId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({
@@ -66,6 +74,8 @@ export function SellerDashboard({
     discountPercent: '',
     features: '',
   });
+  const [promoCode, setPromoCode] = useState('');
+  const [promoMaxUses, setPromoMaxUses] = useState(10);
 
   if (!isOpen) return null;
 
@@ -73,7 +83,10 @@ export function SellerDashboard({
     <div className="min-h-screen bg-white p-4 md:p-6">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-gray-900">Панель производителя</h2>
+          <div>
+            <h2 className="text-gray-900">Панель продавца</h2>
+            <p className="text-sm text-gray-500">Управление товарами, компанией и промокодами</p>
+          </div>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 transition"
@@ -157,6 +170,84 @@ export function SellerDashboard({
             </div>
           )}
         </div>
+
+        {onCreatePromo && (
+          <div className="mb-10">
+            <h3 className="text-gray-800 mb-3">Промокоды (панель продавца)</h3>
+            <form
+              className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                onCreatePromo({ code: promoCode, maxUses: promoMaxUses });
+                setPromoCode('');
+                setPromoMaxUses(10);
+              }}
+            >
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-gray-700 mb-1 text-sm">Промокод</label>
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase"
+                    placeholder="SALE2025"
+                    required
+                    maxLength={20}
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-1 text-sm">Макс. использований</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={promoMaxUses}
+                    onChange={(e) => setPromoMaxUses(Number(e.target.value))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition"
+              >
+                Создать промокод
+              </button>
+            </form>
+
+            <div className="mt-4">
+              <h4 className="text-gray-700 mb-2 text-sm">Список промокодов ({promos.length})</h4>
+              {promos.length === 0 ? (
+                <div className="bg-white border border-dashed border-gray-300 rounded-lg p-4 text-gray-600 text-sm">
+                  Пока нет промокодов. Создайте первый выше.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {promos.map((promo) => (
+                    <div key={promo.code} className="border border-gray-200 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                      <div>
+                        <p className="text-lg font-semibold text-gray-900">{promo.code}</p>
+                        <p className="text-sm text-gray-500">Создан: {new Date(promo.createdAt).toLocaleString()}</p>
+                      </div>
+                      <div className="flex items-center gap-3 w-full md:w-auto">
+                        <div className="text-sm text-gray-700">
+                          {promo.used}/{promo.maxUses} использований
+                        </div>
+                        <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden min-w-[120px]">
+                          <div
+                            className="h-full bg-indigo-500"
+                            style={{ width: `${Math.min(100, (promo.used / promo.maxUses) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div>
           <h3 className="text-gray-800 mb-4">Мои товары ({products.length})</h3>
@@ -314,11 +405,18 @@ export function SellerDashboard({
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-gray-700 mb-2">Улус</label>
-                    <input
+                    <select
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       value={editForm.ulys}
                       onChange={(e) => setEditForm({ ...editForm, ulys: e.target.value })}
-                    />
+                    >
+                      <option value="">Выберите улус</option>
+                      {uluses.map((u) => (
+                        <option key={u} value={u}>
+                          {u}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-gray-700 mb-2">Остаток (лимит)</label>

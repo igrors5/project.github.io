@@ -12,7 +12,6 @@ import { SellerDashboard } from './components/SellerDashboard';
 import { CompanyProfile } from './components/CompanyProfile';
 import { ProductsPage } from './components/ProductsPage';
 import { Chatbot } from './components/Chatbot';
-import { AdminPanel } from './components/AdminPanel';
 import { AuthPage } from './components/AuthPage';
 import { Award, Truck, BadgeCheck, Phone } from './components/Icons';
 import { useState, useEffect, useMemo } from 'react';
@@ -53,8 +52,10 @@ interface CartItem {
   id: number;
   name: string;
   price: number;
+  originalPrice?: number;
   image: string;
   quantity: number;
+  discountPercent?: number;
 }
 
 interface ToastType {
@@ -72,7 +73,7 @@ interface User {
 let toastIdCounter = 0;
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'products' | 'auth'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'products' | 'auth' | 'seller'>('home');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -87,13 +88,11 @@ export default function App() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
-  const [isSellerDashboardOpen, setIsSellerDashboardOpen] = useState(false);
   const [isCompanyProfileOpen, setIsCompanyProfileOpen] = useState(false);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [sellerProducts, setSellerProducts] = useState<any[]>([]);
   const [promos, setPromos] = useState<any[]>([]);
   const [isSeller, setIsSeller] = useState(false);
-  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
   // Load products from server
   useEffect(() => {
@@ -301,6 +300,13 @@ export default function App() {
     }
   };
 
+  const getDiscountedPrice = (price: number, discountPercent?: number) => {
+    if (discountPercent && discountPercent > 0) {
+      return Math.round(price * (1 - discountPercent / 100));
+    }
+    return price;
+  };
+
   const addToCart = (product: Product, quantity: number = 1) => {
     if (product.quantity !== undefined && product.quantity <= 0) {
       toast.error('Товар недоступен');
@@ -314,6 +320,7 @@ export default function App() {
         return prev;
       }
       const existing = prev.find(item => item.id === product.id);
+      const effectivePrice = getDiscountedPrice(product.price, product.discountPercent);
       if (existing) {
         toast.success('Количество товара увеличено!');
         return prev.map(item => {
@@ -322,12 +329,29 @@ export default function App() {
           if (product.quantity !== undefined) {
             return { ...item, quantity: Math.min(newQty, product.quantity) };
           }
-          return { ...item, quantity: newQty };
+          return {
+            ...item,
+            quantity: newQty,
+            price: effectivePrice,
+            originalPrice: product.price,
+            discountPercent: product.discountPercent,
+          };
         });
       }
       toast.success('Товар добавлен в корзину!');
       const initialQty = product.quantity !== undefined ? Math.min(quantity, product.quantity) : quantity;
-      return [...prev, { ...product, quantity: initialQty }];
+      return [
+        ...prev,
+        {
+          id: product.id,
+          name: product.name,
+          price: effectivePrice,
+          originalPrice: product.price,
+          image: product.image,
+          quantity: initialQty,
+          discountPercent: product.discountPercent,
+        },
+      ];
     });
   };
 
@@ -389,7 +413,8 @@ export default function App() {
   const handleCheckout = () => {
     toast.info('Функция оформления заказа будет доступна в ближайшее время!');
     setTimeout(() => {
-      toast.success(`Ваш заказ на сумму ${cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0).toLocaleString()} ₽ принят!`);
+      const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      toast.success(`Ваш заказ на сумму ${total.toLocaleString()} ₽ принят!`);
       setCartItems([]);
       setIsCartOpen(false);
     }, 1500);
@@ -451,7 +476,7 @@ export default function App() {
 
 
   const handleProfileClick = () => {
-    setIsSellerDashboardOpen(true);
+    setCurrentPage('seller');
   };
 
 
@@ -543,6 +568,49 @@ export default function App() {
     );
   }
 
+  if (currentPage === 'seller') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <ToastContainer toasts={toasts} onRemove={removeToast} />
+        <SellerDashboard
+          isOpen
+          onClose={() => setCurrentPage('home')}
+          products={sellerProducts}
+          onAddProduct={() => {
+            setCurrentPage('home');
+            setIsAddProductModalOpen(true);
+          }}
+          onCompanyProfile={() => {
+            setCurrentPage('home');
+            setIsCompanyProfileOpen(true);
+          }}
+          onDeleteProduct={handleDeleteProduct}
+          salesData={salesData}
+          onMakeAdmin={handleMakeSeller}
+          isSeller={isSeller}
+          onUpdateProduct={handleUpdateProduct}
+          promos={promos}
+          onCreatePromo={handleCreatePromo}
+          uluses={allUluses}
+        />
+
+        <AddProductModal
+          isOpen={isAddProductModalOpen}
+          onClose={() => setIsAddProductModalOpen(false)}
+          onSubmit={handleAddProduct}
+        />
+
+        <CompanyProfile
+          isOpen={isCompanyProfileOpen}
+          onClose={() => setIsCompanyProfileOpen(false)}
+          accessToken={accessToken}
+        />
+
+        <Chatbot />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <ToastContainer toasts={toasts} onRemove={removeToast} />
@@ -557,7 +625,7 @@ export default function App() {
           onProfileClick={handleProfileClick}
           onLogout={handleLogout}
           isAdmin={isSeller}
-          onAdminClick={() => setIsAdminPanelOpen(true)}
+          onAdminClick={() => setCurrentPage('seller')}
           onMakeAdmin={handleMakeSeller}
         />
       )}
@@ -573,6 +641,7 @@ export default function App() {
           wishlist={wishlist}
           cartCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
           user={user}
+        isSeller={isSeller}
           onCategoryChange={setSelectedCategory}
           onUlysChange={setSelectedUlys}
           onSortChange={setSortBy}
@@ -591,6 +660,7 @@ export default function App() {
           onAuthClick={goToAuthPage}
           onProfileClick={handleProfileClick}
           onLogout={handleLogout}
+          onAdminClick={() => setCurrentPage('seller')}
         />
       ) : (
         <>
@@ -735,36 +805,10 @@ export default function App() {
         onSubmit={handleAddProduct}
       />
 
-      <SellerDashboard
-        isOpen={isSellerDashboardOpen}
-        onClose={() => setIsSellerDashboardOpen(false)}
-        products={sellerProducts}
-        onAddProduct={() => {
-          setIsSellerDashboardOpen(false);
-          setIsAddProductModalOpen(true);
-        }}
-        onCompanyProfile={() => {
-          setIsSellerDashboardOpen(false);
-          setIsCompanyProfileOpen(true);
-        }}
-        onDeleteProduct={handleDeleteProduct}
-        salesData={salesData}
-        onMakeAdmin={handleMakeSeller}
-        isSeller={isSeller}
-        onUpdateProduct={handleUpdateProduct}
-      />
-
       <CompanyProfile
         isOpen={isCompanyProfileOpen}
         onClose={() => setIsCompanyProfileOpen(false)}
         accessToken={accessToken}
-      />
-
-      <AdminPanel
-        isOpen={isAdminPanelOpen && isSeller}
-        onClose={() => setIsAdminPanelOpen(false)}
-        promos={promos}
-        onCreatePromo={handleCreatePromo}
       />
 
       <Chatbot />

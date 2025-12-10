@@ -4,8 +4,10 @@ interface CartItem {
   id: number;
   name: string;
   price: number;
+  originalPrice?: number;
   image: string;
   quantity: number;
+  discountPercent?: number;
 }
 
 interface CartSidebarProps {
@@ -66,7 +68,14 @@ export function CartSidebar({ isOpen, onClose, items, onUpdateQuantity, onRemove
                   />
                   <div className="flex-1">
                     <h3 className="text-gray-900 mb-2">{item.name}</h3>
-                    <p className="text-indigo-600 mb-2">{item.price.toLocaleString()} ₽</p>
+                <div className="mb-2">
+                  <span className="text-indigo-600 text-lg font-semibold">{item.price.toLocaleString()} ₽</span>
+                  {item.discountPercent && item.discountPercent > 0 && (
+                    <span className="text-sm text-gray-500 line-through ml-2">
+                      {(item.originalPrice ?? item.price).toLocaleString()} ₽
+                    </span>
+                  )}
+                </div>
                     
                     <div className="flex items-center gap-3">
                       <button 
