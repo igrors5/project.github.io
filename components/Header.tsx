@@ -13,9 +13,10 @@ interface HeaderProps {
   onAdminClick?: () => void;
   onMakeAdmin?: () => void;
   isSeller?: boolean;
+  onCompanyListClick?: () => void;
 }
 
-export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClick, onProfileClick, onLogout, isAdmin, onAdminClick, onMakeAdmin, isSeller }: HeaderProps) {
+export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClick, onProfileClick, onLogout, isAdmin, onAdminClick, onMakeAdmin, isSeller, onCompanyListClick }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
@@ -33,6 +34,14 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
             <a href="#products" onClick={(e) => { e.preventDefault(); document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-gray-700 hover:text-indigo-600 transition">Товары</a>
             <a href="#about" className="text-gray-700 hover:text-indigo-600 transition">О нас</a>
             <a href="#contact" className="text-gray-700 hover:text-indigo-600 transition">Контакты</a>
+            {onCompanyListClick && (
+              <button
+                onClick={onCompanyListClick}
+                className="text-gray-700 hover:text-indigo-600 transition"
+              >
+                Компании
+              </button>
+            )}
           </nav>
 
           {/* Desktop Actions */}
@@ -145,6 +154,17 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
               <a href="#products" onClick={(e) => { e.preventDefault(); document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' }); setMobileMenuOpen(false); }} className="text-gray-700 hover:text-indigo-600 transition">Товары</a>
               <a href="#about" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-indigo-600 transition">О нас</a>
               <a href="#contact" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-indigo-600 transition">Контакты</a>
+              {onCompanyListClick && (
+                <button
+                  onClick={() => {
+                    onCompanyListClick();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-left text-gray-700 hover:text-indigo-600 transition"
+                >
+                  Компании
+                </button>
+              )}
               <div className="flex items-center space-x-4 pt-4 border-t">
                 <button 
                   onClick={() => { onSearchClick(); setMobileMenuOpen(false); }}

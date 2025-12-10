@@ -13,6 +13,7 @@ import { CompanyProfile } from './components/CompanyProfile';
 import { ProductsPage } from './components/ProductsPage';
 import { Chatbot } from './components/Chatbot';
 import { AuthPage } from './components/AuthPage';
+import { CompanyPage } from './components/CompanyPage';
 import { Award, Truck, BadgeCheck, Phone } from './components/Icons';
 import { useState, useEffect, useMemo } from 'react';
 import { api } from './utils/api';
@@ -73,7 +74,7 @@ interface User {
 let toastIdCounter = 0;
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'products' | 'auth' | 'seller'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'products' | 'auth' | 'seller' | 'company'>('home');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -568,6 +569,24 @@ export default function App() {
     );
   }
 
+  if (currentPage === 'company') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <ToastContainer toasts={toasts} onRemove={removeToast} />
+        <CompanyPage
+          onBack={() => setCurrentPage('home')}
+          onOpenProfile={() => setIsCompanyProfileOpen(true)}
+        />
+        <CompanyProfile
+          isOpen={isCompanyProfileOpen}
+          onClose={() => setIsCompanyProfileOpen(false)}
+          accessToken={accessToken}
+        />
+        <Chatbot />
+      </div>
+    );
+  }
+
   if (currentPage === 'seller') {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -581,8 +600,7 @@ export default function App() {
             setIsAddProductModalOpen(true);
           }}
           onCompanyProfile={() => {
-            setCurrentPage('home');
-            setIsCompanyProfileOpen(true);
+            setCurrentPage('company');
           }}
           onDeleteProduct={handleDeleteProduct}
           salesData={salesData}
@@ -627,6 +645,7 @@ export default function App() {
           isAdmin={isSeller}
           onAdminClick={() => setCurrentPage('seller')}
           onMakeAdmin={handleMakeSeller}
+          onCompanyListClick={() => setCurrentPage('company')}
         />
       )}
       
@@ -661,6 +680,7 @@ export default function App() {
           onProfileClick={handleProfileClick}
           onLogout={handleLogout}
           onAdminClick={() => setCurrentPage('seller')}
+          onCompanyListClick={() => setCurrentPage('company')}
         />
       ) : (
         <>

@@ -27,6 +27,7 @@ interface ProductsPageProps {
   onProfileClick?: () => void;
   onLogout?: () => void;
   onAdminClick?: () => void;
+  onCompanyListClick?: () => void;
 }
 
 export function ProductsPage({
@@ -53,6 +54,7 @@ export function ProductsPage({
   onProfileClick,
   onLogout,
   onAdminClick,
+  onCompanyListClick,
 }: ProductsPageProps) {
   // Filter and sort products
   let filteredProducts = products;
@@ -97,6 +99,14 @@ export function ProductsPage({
                     className="px-3 py-2 text-xs font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-md transition"
                   >
                     Панель продавца
+                  </button>
+                )}
+                {onCompanyListClick && (
+                  <button
+                    onClick={onCompanyListClick}
+                    className="px-3 py-2 text-xs font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition"
+                  >
+                    Компании
                   </button>
                 )}
                 <button
