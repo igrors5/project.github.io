@@ -164,22 +164,29 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
                   )}
                 </button>
                 {user ? (
-                  <div className="relative">
-                    <button
-                      onClick={onProfileClick}
-                      className="text-gray-700 hover:text-indigo-600 transition"
-                    >
-                      <User className="w-5 h-5" />
-                    </button>
+                  <div className="flex flex-col gap-2 w-full">
+                    {isSeller && onProfileClick && (
+                      <button
+                        onClick={() => {
+                          onProfileClick();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="flex items-center gap-2 text-gray-700 hover:text-indigo-600 transition"
+                      >
+                        <User className="w-5 h-5" />
+                        <span>Мои товары</span>
+                      </button>
+                    )}
                     {onLogout && (
-                      <div className="absolute right-0 top-10 bg-white shadow-md rounded-md px-4 py-2">
-                        <button
-                          onClick={onLogout}
-                          className="text-gray-700 hover:text-indigo-600 transition"
-                        >
-                          Выйти
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => {
+                          onLogout();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="text-gray-700 hover:text-indigo-600 transition flex items-center gap-2"
+                      >
+                        <span>Выйти</span>
+                      </button>
                     )}
                   </div>
                 ) : (

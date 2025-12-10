@@ -1,8 +1,4 @@
-import { projectId, publicAnonKey } from './supabase/info';
-import { initDB, userDB, productDB, sessionDB, promoDB, User, Product, Promo } from './localDB';
-
-const supabaseUrl = `https://${projectId}.supabase.co`;
-const API_BASE = `${supabaseUrl}/functions/v1/make-server-65112a46`;
+import { initDB, userDB, productDB, sessionDB, promoDB, Promo } from './localDB';
 
 // Инициализация БД при первом импорте
 initDB();
@@ -27,6 +23,19 @@ interface ProductData {
   characteristics?: string;
   quantity?: number;
   ulys?: string;
+}
+
+interface UpdateProductData {
+  id: number;
+  name: string;
+  price: number;
+  image?: string;
+  category: string;
+  description?: string;
+  ulys?: string;
+  stock?: number;
+  discountPercent?: number;
+  features?: string;
 }
 
 // Генерация токена
@@ -214,6 +223,28 @@ export const api = {
       }
     } catch (error) {
       return { error: 'Ошибка при удалении товара' };
+    }
+  },
+
+  // Promocodes
+  async getPromocodes() {
+    try {
+      const promos = promoDB.getAll();
+      return { success: true, promos };
+    } catch (error) {
+      return { error: 'Не удалось получить промокоды' };
+    }
+  },
+
+  async createPromocode(data: { code: string; maxUses: number }) {
+    try {
+      const result = promoDB.create({ code: data.code, maxUses: data.maxUses });
+      if ('error' in result) {
+        return { error: result.error };
+      }
+      return { success: true, promo: result as Promo };
+    } catch (error) {
+      return { error: 'Не удалось создать промокод' };
     }
   },
 };

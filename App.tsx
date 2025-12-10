@@ -13,6 +13,7 @@ import { CompanyProfile } from './components/CompanyProfile';
 import { ProductsPage } from './components/ProductsPage';
 import { Chatbot } from './components/Chatbot';
 import { AdminPanel } from './components/AdminPanel';
+import { AuthPage } from './components/AuthPage';
 import { Award, Truck, BadgeCheck, Phone } from './components/Icons';
 import { useState, useEffect, useMemo } from 'react';
 import { api } from './utils/api';
@@ -71,7 +72,7 @@ interface User {
 let toastIdCounter = 0;
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'products'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'products' | 'auth'>('home');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -160,6 +161,11 @@ export default function App() {
     if (response.success) {
       setPromos(response.promos);
     }
+  };
+
+  const goToAuthPage = () => {
+    setCurrentPage('auth');
+    setIsAuthModalOpen(false);
   };
 
   const showToast = (message: string, type: 'success' | 'error' | 'info') => {
@@ -523,6 +529,20 @@ export default function App() {
     });
   }
 
+  if (currentPage === 'auth') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <ToastContainer toasts={toasts} onRemove={removeToast} />
+        <AuthPage
+          onBack={() => setCurrentPage('home')}
+          onLogin={handleLogin}
+          onSignup={handleSignup}
+          onRecoveryRequest={handleRecoveryRequest}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <ToastContainer toasts={toasts} onRemove={removeToast} />
@@ -533,7 +553,7 @@ export default function App() {
           onCartClick={() => setIsCartOpen(true)}
           onSearchClick={() => setIsSearchOpen(true)}
           user={user}
-          onAuthClick={() => setIsAuthModalOpen(true)}
+          onAuthClick={goToAuthPage}
           onProfileClick={handleProfileClick}
           onLogout={handleLogout}
           isAdmin={isSeller}
@@ -568,7 +588,7 @@ export default function App() {
             window.history.pushState({}, '', window.location.pathname);
           }}
           onCartClick={() => setIsCartOpen(true)}
-          onAuthClick={() => setIsAuthModalOpen(true)}
+          onAuthClick={goToAuthPage}
           onProfileClick={handleProfileClick}
           onLogout={handleLogout}
         />
