@@ -6,6 +6,8 @@ interface CompanyProfileProps {
   onClose: () => void;
   accessToken: string | null;
   onSave?: () => void;
+  initialDataMode?: 'empty' | 'stored';
+  forceEdit?: boolean;
 }
 
 interface CompanyData {
@@ -17,7 +19,7 @@ interface CompanyData {
   createdAt?: string;
 }
 
-export function CompanyProfile({ isOpen, onClose, accessToken, onSave }: CompanyProfileProps) {
+export function CompanyProfile({ isOpen, onClose, accessToken, onSave, initialDataMode = 'stored', forceEdit = false }: CompanyProfileProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [companyData, setCompanyData] = useState<CompanyData>({
     name: '',
@@ -29,10 +31,24 @@ export function CompanyProfile({ isOpen, onClose, accessToken, onSave }: Company
   const [companies, setCompanies] = useState<CompanyData[]>([]);
 
   useEffect(() => {
-    if (isOpen && accessToken) {
-      loadCompanyData();
+    if (!isOpen) return;
+    if (initialDataMode === 'empty') {
+      setCompanyData({
+        name: '',
+        description: '',
+        contacts: '',
+        deliveryMethod: '',
+      });
+      setIsEditing(true);
+      return;
     }
-  }, [isOpen, accessToken]);
+    if (accessToken) {
+      loadCompanyData();
+      if (forceEdit) {
+        setIsEditing(true);
+      }
+    }
+  }, [isOpen, accessToken, initialDataMode, forceEdit]);
 
   const loadCompanyData = async () => {
     const saved = localStorage.getItem('companyProfile');
@@ -89,7 +105,7 @@ export function CompanyProfile({ isOpen, onClose, accessToken, onSave }: Company
       <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-gray-900">Профиль компании</h2>
+            <h2 className="text-gray-900">Профиль продавца</h2>
             <div className="flex items-center gap-2">
               {isEditing ? (
                 <button
@@ -120,7 +136,7 @@ export function CompanyProfile({ isOpen, onClose, accessToken, onSave }: Company
 
           <div className="space-y-6">
             <div>
-              <label className="block text-gray-700 mb-2 font-medium">Название компании</label>
+              <label className="block text-gray-700 mb-2 font-medium">Название продавца</label>
               {isEditing ? (
                 <input
                   type="text"
@@ -136,7 +152,7 @@ export function CompanyProfile({ isOpen, onClose, accessToken, onSave }: Company
             </div>
 
             <div>
-              <label className="block text-gray-700 mb-2 font-medium">Описание компании</label>
+              <label className="block text-gray-700 mb-2 font-medium">Описание продавца</label>
               {isEditing ? (
                 <textarea
                   value={companyData.description}
@@ -197,7 +213,7 @@ export function CompanyProfile({ isOpen, onClose, accessToken, onSave }: Company
           </div>
 
           <div className="mt-8">
-            <h3 className="text-gray-900 mb-3">Сохраненные компании ({companies.length})</h3>
+            <h3 className="text-gray-900 mb-3">Сохраненные продавцы ({companies.length})</h3>
             {companies.length === 0 ? (
               <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">Пока нет сохраненных компаний.</div>
             ) : (

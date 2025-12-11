@@ -14,9 +14,11 @@ interface HeaderProps {
   onMakeAdmin?: () => void;
   isSeller?: boolean;
   onCompanyListClick?: () => void;
+  onExitSeller?: () => void;
+  onAboutClick?: () => void;
 }
 
-export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClick, onProfileClick, onLogout, isAdmin, onAdminClick, onMakeAdmin, isSeller, onCompanyListClick }: HeaderProps) {
+export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClick, onProfileClick, onLogout, isAdmin, onAdminClick, onMakeAdmin, isSeller, onCompanyListClick, onExitSeller, onAboutClick }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
@@ -32,14 +34,18 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <a href="#products" onClick={(e) => { e.preventDefault(); document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-gray-700 hover:text-indigo-600 transition">Товары</a>
-            <a href="#about" className="text-gray-700 hover:text-indigo-600 transition">О нас</a>
-            <a href="#contact" className="text-gray-700 hover:text-indigo-600 transition">Контакты</a>
+            <button
+              onClick={onAboutClick}
+              className="text-gray-700 hover:text-indigo-600 transition"
+            >
+              О нас
+            </button>
             {onCompanyListClick && (
               <button
                 onClick={onCompanyListClick}
                 className="text-gray-700 hover:text-indigo-600 transition"
               >
-                Компании
+                Продавцы
               </button>
             )}
           </nav>
@@ -99,6 +105,17 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
                         Панель продавца
                       </button>
                     )}
+                    {isSeller && onExitSeller && (
+                      <button
+                        onClick={() => {
+                          onExitSeller();
+                          setProfileMenuOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
+                      >
+                        Выйти из роли продавца
+                      </button>
+                    )}
                     {!isAdmin && onMakeAdmin && (
                       <button
                         onClick={() => {
@@ -152,8 +169,15 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
           <div className="md:hidden py-4 border-t">
             <nav className="flex flex-col space-y-4">
               <a href="#products" onClick={(e) => { e.preventDefault(); document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' }); setMobileMenuOpen(false); }} className="text-gray-700 hover:text-indigo-600 transition">Товары</a>
-              <a href="#about" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-indigo-600 transition">О нас</a>
-              <a href="#contact" onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-indigo-600 transition">Контакты</a>
+              <button
+                onClick={() => {
+                  onAboutClick?.();
+                  setMobileMenuOpen(false);
+                }}
+                className="text-left text-gray-700 hover:text-indigo-600 transition"
+              >
+                О нас
+              </button>
               {onCompanyListClick && (
                 <button
                   onClick={() => {
@@ -162,7 +186,7 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
                   }}
                   className="text-left text-gray-700 hover:text-indigo-600 transition"
                 >
-                  Компании
+                  Продавцы
                 </button>
               )}
               <div className="flex items-center space-x-4 pt-4 border-t">
@@ -195,6 +219,17 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
                       >
                         <User className="w-5 h-5" />
                         <span>Мои товары</span>
+                      </button>
+                    )}
+                    {isSeller && onExitSeller && (
+                      <button
+                        onClick={() => {
+                          onExitSeller();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="text-left text-gray-700 hover:text-indigo-600 transition"
+                      >
+                        Выйти из роли продавца
                       </button>
                     )}
                     {onLogout && (

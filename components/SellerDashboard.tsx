@@ -31,6 +31,7 @@ interface SellerDashboardProps {
   salesData?: Array<{ name: string; sales: number }>;
   onMakeAdmin?: () => void;
   isSeller?: boolean;
+  onExitSeller?: () => void;
   onUpdateProduct?: (productId: number, data: {
     name: string;
     price: number;
@@ -57,6 +58,7 @@ export function SellerDashboard({
   salesData = [],
   onMakeAdmin,
   isSeller,
+  onExitSeller,
   onUpdateProduct,
   promos = [],
   onCreatePromo,
@@ -87,12 +89,22 @@ export function SellerDashboard({
             <h2 className="text-gray-900">Панель продавца</h2>
             <p className="text-sm text-gray-500">Управление товарами, компанией и промокодами</p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition"
-          >
-            Закрыть
-          </button>
+          <div className="flex items-center gap-3">
+            {isSeller && onExitSeller && (
+              <button
+                onClick={onExitSeller}
+                className="text-gray-600 hover:text-gray-900 transition px-3 py-2 rounded-lg border border-gray-200"
+              >
+                Выйти из роли продавца
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 transition"
+            >
+              Закрыть
+            </button>
+          </div>
         </div>
 
         <div className="mb-6 flex flex-wrap gap-3">

@@ -3,7 +3,9 @@ import { Plus, ArrowLeft } from './Icons';
 
 interface CompanyPageProps {
   onBack: () => void;
-  onOpenProfile: () => void;
+  onAddProfile: () => void;
+  onEditProfile: () => void;
+  isSeller?: boolean;
 }
 
 interface CompanyData {
@@ -15,8 +17,11 @@ interface CompanyData {
   createdAt?: string;
 }
 
-export function CompanyPage({ onBack, onOpenProfile }: CompanyPageProps) {
+export function CompanyPage({ onBack, onAddProfile, onEditProfile, isSeller }: CompanyPageProps) {
   const [companies, setCompanies] = useState<CompanyData[]>([]);
+  const handleBack = () => {
+    onBack();
+  };
 
   const loadCompanies = () => {
     const list = localStorage.getItem('companyProfiles');
@@ -46,27 +51,39 @@ export function CompanyPage({ onBack, onOpenProfile }: CompanyPageProps) {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <button
-              onClick={onBack}
+              onClick={handleBack}
               className="inline-flex items-center gap-2 text-gray-600 hover:text-indigo-600 transition"
             >
               <ArrowLeft className="w-5 h-5" />
-              На главную
+              Назад
             </button>
-            <h2 className="text-xl font-semibold text-gray-900">Профиль компании</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Продавцы</h2>
           </div>
-          <button
-            onClick={onOpenProfile}
-            className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
-          >
-            <Plus className="w-4 h-4" />
-            Добавить / редактировать
-          </button>
+          {isSeller && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onAddProfile}
+                className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+              >
+                <Plus className="w-4 h-4" />
+                Добавить
+              </button>
+              <button
+                onClick={onEditProfile}
+                disabled={companies.length === 0}
+                className="inline-flex items-center gap-2 bg-gray-100 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-200 transition disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <Plus className="w-4 h-4 rotate-45" />
+                Редактировать
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="bg-white shadow rounded-xl p-4">
-          <h3 className="text-gray-800 mb-3">Все компании ({companies.length})</h3>
+          <h3 className="text-gray-800 mb-3">Все продавцы ({companies.length})</h3>
           {companies.length === 0 ? (
-            <div className="text-gray-600 text-sm">Пока нет сохраненных компаний.</div>
+            <div className="text-gray-600 text-sm">Пока нет сохраненных продавцов.</div>
           ) : (
             <div className="space-y-3">
               {companies.map((c) => (

@@ -2,9 +2,11 @@ import { Mail, Phone, MapPin } from './Icons';
 
 interface FooterProps {
   onShowToast?: (message: string, type: 'success' | 'error' | 'info') => void;
+  onAboutClick?: () => void;
+  quickLinksMode?: 'full' | 'aboutOnly';
 }
 
-export function Footer({ onShowToast }: FooterProps) {
+export function Footer({ onShowToast, onAboutClick, quickLinksMode = 'full' }: FooterProps) {
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -78,36 +80,38 @@ export function Footer({ onShowToast }: FooterProps) {
           <div>
             <h4 className="text-white mb-4">Быстрые ссылки</h4>
             <ul className="space-y-2 text-sm">
+              {quickLinksMode === 'full' && (
+                <>
+                  <li>
+                    <button 
+                      onClick={() => scrollToSection('home')}
+                      className="hover:text-white transition cursor-pointer text-left"
+                    >
+                      Главная
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => scrollToSection('products')}
+                      className="hover:text-white transition cursor-pointer text-left"
+                    >
+                      Товары
+                    </button>
+                  </li>
+                </>
+              )}
               <li>
                 <button 
-                  onClick={() => scrollToSection('home')}
-                  className="hover:text-white transition cursor-pointer text-left"
-                >
-                  Главная
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => scrollToSection('products')}
-                  className="hover:text-white transition cursor-pointer text-left"
-                >
-                  Товары
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => handleServiceClick('О нас')}
+                  onClick={() => {
+                    if (onAboutClick) {
+                      onAboutClick();
+                    } else {
+                      handleServiceClick('О нас');
+                    }
+                  }}
                   className="hover:text-white transition cursor-pointer text-left"
                 >
                   О нас
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => handleServiceClick('Блог')}
-                  className="hover:text-white transition cursor-pointer text-left"
-                >
-                  Блог
                 </button>
               </li>
             </ul>

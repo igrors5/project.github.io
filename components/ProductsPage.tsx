@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { ProductCard } from './ProductCard';
 import { ProductFilters } from './ProductFilters';
 import { ShoppingCart, User } from './Icons';
 import { Product } from '../utils/localDB';
+import { Footer } from './Footer';
 
 interface ProductsPageProps {
   products: Product[];
@@ -25,9 +27,11 @@ interface ProductsPageProps {
   onCartClick: () => void;
   onAuthClick: () => void;
   onProfileClick?: () => void;
+  onMakeAdmin?: () => void;
   onLogout?: () => void;
   onAdminClick?: () => void;
   onCompanyListClick?: () => void;
+  onAboutClick?: () => void;
 }
 
 export function ProductsPage({
@@ -52,10 +56,21 @@ export function ProductsPage({
   onCartClick,
   onAuthClick,
   onProfileClick,
+  onMakeAdmin,
   onLogout,
   onAdminClick,
   onCompanyListClick,
+  onAboutClick,
 }: ProductsPageProps) {
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+
+  const handleProfileButton = () => {
+    if (isSeller && onProfileClick) {
+      onProfileClick();
+      return;
+    }
+    setProfileMenuOpen(prev => !prev);
+  };
   // Filter and sort products
   let filteredProducts = products;
 
@@ -106,18 +121,50 @@ export function ProductsPage({
                     onClick={onCompanyListClick}
                     className="px-3 py-2 text-xs font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition"
                   >
-                    Компании
+                    Продавцы
                   </button>
                 )}
+                <div className="relative">
+                  <button
+                    onClick={handleProfileButton}
+                    className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition"
+                  >
+                    <User className="w-5 h-5" />
+                    <span className="text-sm">{user.name}</span>
+                  </button>
+                  {!isSeller && profileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+                      <div className="px-4 py-3 border-b text-sm text-gray-600">{user.email}</div>
+                      {onMakeAdmin && (
+                        <button
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            onMakeAdmin();
+                          }}
+                          className="w-full text-left px-4 py-2 text-amber-600 hover:bg-gray-50 transition text-sm"
+                        >
+                          Стать продавцом
+                        </button>
+                      )}
+                      {onLogout && (
+                        <button
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            onLogout();
+                          }}
+                          className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-50 transition text-sm"
+                        >
+                          Выйти
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <button
-                  onClick={onProfileClick}
-                  className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition"
-                >
-                  <User className="w-5 h-5" />
-                  <span className="text-sm">{user.name}</span>
-                </button>
-                <button
-                  onClick={onCartClick}
+                  onClick={() => {
+                    setProfileMenuOpen(false);
+                    onCartClick();
+                  }}
                   className="relative flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition"
                 >
                   <ShoppingCart className="w-5 h-5" />
@@ -128,14 +175,6 @@ export function ProductsPage({
                     </span>
                   )}
                 </button>
-                {onLogout && (
-                  <button
-                    onClick={onLogout}
-                    className="text-sm text-red-600 hover:text-red-700 px-2 py-1 rounded-md transition"
-                  >
-                    Выйти
-                  </button>
-                )}
               </div>
             ) : (
               <button
@@ -205,6 +244,7 @@ export function ProductsPage({
           </div>
         )}
       </div>
+      <Footer quickLinksMode="aboutOnly" onAboutClick={onAboutClick} />
     </div>
   );
 }

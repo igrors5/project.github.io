@@ -20,6 +20,7 @@ import { api } from './utils/api';
 import { Product } from './utils/localDB';
 
 const AUTH_TOKEN_KEY = 'accessToken';
+const SELLER_ROLE_KEY = 'isSeller';
 
 
 const features = [
@@ -74,7 +75,7 @@ interface User {
 let toastIdCounter = 0;
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'products' | 'auth' | 'seller' | 'company'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'products' | 'auth' | 'seller' | 'company' | 'about'>('home');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -94,6 +95,16 @@ export default function App() {
   const [sellerProducts, setSellerProducts] = useState<any[]>([]);
   const [promos, setPromos] = useState<any[]>([]);
   const [isSeller, setIsSeller] = useState(false);
+  const [companyPrevPage, setCompanyPrevPage] = useState<'home' | 'products' | 'seller' | 'auth'>('home');
+  const [companyProfileMode, setCompanyProfileMode] = useState<'add' | 'edit'>('edit');
+
+  // Restore seller role flag
+  useEffect(() => {
+    const storedSellerRole = localStorage.getItem(SELLER_ROLE_KEY);
+    if (storedSellerRole === 'true') {
+      setIsSeller(true);
+    }
+  }, []);
 
   // Load products from server
   useEffect(() => {
@@ -222,7 +233,9 @@ export default function App() {
     }
     setUser(null);
     setAccessToken(null);
+    setIsSeller(false);
     localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(SELLER_ROLE_KEY);
     toast.success('Вы вышли из системы');
   };
 
@@ -449,7 +462,31 @@ export default function App() {
 
   const handleMakeSeller = () => {
     setIsSeller(true);
+    localStorage.setItem(SELLER_ROLE_KEY, 'true');
     toast.success('Режим продавца включен');
+  };
+
+  const openCompanyPage = () => {
+    setCompanyPrevPage(currentPage);
+    setCurrentPage('company');
+  };
+
+  const handleOpenCompanyProfile = (mode: 'add' | 'edit' = 'edit') => {
+    if (!isSeller) {
+      toast.error('Профиль продавца доступен только для продавцов');
+      return;
+    }
+    setCompanyProfileMode(mode);
+    setIsCompanyProfileOpen(true);
+  };
+
+  const handleExitSeller = () => {
+    setIsSeller(false);
+    localStorage.removeItem(SELLER_ROLE_KEY);
+    if (currentPage === 'seller') {
+      setCurrentPage('home');
+    }
+    toast.info('Режим продавца выключен');
   };
 
   const handleCreatePromo = async (data: { code: string; maxUses: number }) => {
@@ -475,8 +512,34 @@ export default function App() {
     [sellerProducts],
   );
 
+  const popularProducts = useMemo(() => {
+    const visible = allProducts.filter(p => !p.hidden);
+    return [...visible]
+      .sort((a, b) => {
+        const discountDiff = (b.discountPercent || 0) - (a.discountPercent || 0);
+        if (discountDiff !== 0) return discountDiff;
+        return (b.stock ?? 0) - (a.stock ?? 0);
+      })
+      .slice(0, 4);
+  }, [allProducts]);
+
 
   const handleProfileClick = () => {
+    setCurrentPage('seller');
+  };
+
+  const openAboutPage = () => setCurrentPage('about');
+
+  const handleProfileFromProducts = () => {
+    if (!user) {
+      goToAuthPage();
+      return;
+    }
+    if (!isSeller) {
+      // Для не-продавца показываем главную с привычным меню
+      setCurrentPage('home');
+      return;
+    }
     setCurrentPage('seller');
   };
 
@@ -574,18 +637,56 @@ export default function App() {
       <div className="min-h-screen bg-gray-50">
         <ToastContainer toasts={toasts} onRemove={removeToast} />
         <CompanyPage
-          onBack={() => setCurrentPage('home')}
-          onOpenProfile={() => setIsCompanyProfileOpen(true)}
+          onBack={() => setCurrentPage(companyPrevPage)}
+          onAddProfile={() => handleOpenCompanyProfile('add')}
+          onEditProfile={() => handleOpenCompanyProfile('edit')}
+          isSeller={isSeller}
         />
-        <CompanyProfile
-          isOpen={isCompanyProfileOpen}
-          onClose={() => setIsCompanyProfileOpen(false)}
-          accessToken={accessToken}
-        />
+        {isSeller && (
+          <CompanyProfile
+            isOpen={isCompanyProfileOpen}
+            onClose={() => setIsCompanyProfileOpen(false)}
+            accessToken={accessToken}
+            initialDataMode={companyProfileMode === 'add' ? 'empty' : 'stored'}
+            forceEdit={companyProfileMode === 'add'}
+          />
+        )}
         <Chatbot />
       </div>
     );
   }
+
+  if (currentPage === 'about') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <ToastContainer toasts={toasts} onRemove={removeToast} />
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+          <button
+            onClick={() => setCurrentPage('home')}
+            className="text-indigo-600 hover:text-indigo-700 flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Назад
+          </button>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">О нас</h1>
+            <p className="text-gray-700 leading-relaxed">
+              Мы объединяем продавцов локальных товаров и покупателей, предоставляя простой способ найти уникальные изделия,
+              а также инструменты для управления товарами, скидками и профилем продавца.
+            </p>
+            <p className="text-gray-700 leading-relaxed mt-4">
+              Наш сервис помогает развивать локальные бренды, поддерживает прозрачность и делает покупки удобными для
+              пользователей по всей стране.
+            </p>
+          </div>
+        </div>
+        <Chatbot />
+      </div>
+    );
+  }
+
 
   if (currentPage === 'seller') {
     return (
@@ -600,12 +701,14 @@ export default function App() {
             setIsAddProductModalOpen(true);
           }}
           onCompanyProfile={() => {
-            setCurrentPage('company');
+            openCompanyPage();
+            handleOpenCompanyProfile('edit');
           }}
           onDeleteProduct={handleDeleteProduct}
           salesData={salesData}
           onMakeAdmin={handleMakeSeller}
           isSeller={isSeller}
+          onExitSeller={handleExitSeller}
           onUpdateProduct={handleUpdateProduct}
           promos={promos}
           onCreatePromo={handleCreatePromo}
@@ -645,7 +748,9 @@ export default function App() {
           isAdmin={isSeller}
           onAdminClick={() => setCurrentPage('seller')}
           onMakeAdmin={handleMakeSeller}
-          onCompanyListClick={() => setCurrentPage('company')}
+          onExitSeller={handleExitSeller}
+          onCompanyListClick={openCompanyPage}
+          onAboutClick={openAboutPage}
         />
       )}
       
@@ -677,10 +782,13 @@ export default function App() {
           }}
           onCartClick={() => setIsCartOpen(true)}
           onAuthClick={goToAuthPage}
-          onProfileClick={handleProfileClick}
+          onProfileClick={handleProfileFromProducts}
+          onMakeAdmin={handleMakeSeller}
           onLogout={handleLogout}
           onAdminClick={() => setCurrentPage('seller')}
-          onCompanyListClick={() => setCurrentPage('company')}
+          onExitSeller={handleExitSeller}
+          onCompanyListClick={openCompanyPage}
+          onAboutClick={openAboutPage}
         />
       ) : (
         <>
@@ -743,14 +851,49 @@ export default function App() {
             })()}
           </div>
 
-          <div className="text-center mt-12">
-            <button 
-              onClick={handleViewAllProducts}
-              className="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition"
-            >
-              Смотреть все товары
-            </button>
+        </div>
+      </section>
+
+      {/* Popular Products Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-gray-900 mb-4">Популярные товары</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Товары с лучшими скидками и наличием прямо сейчас
+            </p>
           </div>
+          {popularProducts.length === 0 ? (
+            <div className="text-center text-gray-500">Нет товаров для показа</div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {popularProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    name={product.name}
+                    price={product.price}
+                    image={product.image}
+                    category={product.category}
+                    quantity={product.quantity}
+                    onAddToCart={() => addToCart(product)}
+                    onToggleWishlist={() => toggleWishlist(product.id)}
+                    isInWishlist={wishlist.includes(product.id)}
+                    onCardClick={() => handleProductClick(product)}
+                    sellerId={product.sellerId}
+                  />
+                ))}
+              </div>
+              <div className="text-center mt-10">
+                <button 
+                  onClick={handleViewAllProducts}
+                  className="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition"
+                >
+                  Смотреть все товары
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
@@ -779,7 +922,7 @@ export default function App() {
         </div>
       </section>
 
-          <Footer onShowToast={showToast} />
+          <Footer onShowToast={showToast} onAboutClick={openAboutPage} />
         </>
       )}
       
@@ -808,6 +951,7 @@ export default function App() {
           onAddToCart={handleModalAddToCart}
           onToggleWishlist={() => toggleWishlist(selectedProduct.id)}
           isInWishlist={wishlist.includes(selectedProduct.id)}
+          promos={promos}
         />
       )}
 
@@ -826,7 +970,7 @@ export default function App() {
       />
 
       <CompanyProfile
-        isOpen={isCompanyProfileOpen}
+        isOpen={isCompanyProfileOpen && isSeller}
         onClose={() => setIsCompanyProfileOpen(false)}
         accessToken={accessToken}
       />

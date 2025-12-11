@@ -2,6 +2,7 @@ import { X, ShoppingCart, Heart, Minus, Plus } from './Icons';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useMemo, useState } from 'react';
 import { Product } from '../utils/localDB';
+import type { Promo } from '../utils/localDB';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface ProductModalProps {
   onAddToCart: (quantity: number) => void;
   onToggleWishlist: () => void;
   isInWishlist: boolean;
+  promos?: Promo[];
 }
 
 export function ProductModal({ 
@@ -18,9 +20,12 @@ export function ProductModal({
   product, 
   onAddToCart, 
   onToggleWishlist,
-  isInWishlist 
+  isInWishlist,
+  promos = [],
 }: ProductModalProps) {
   const [quantity, setQuantity] = useState(1);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoStatus, setPromoStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const available = useMemo(() => {
     if (product.stock !== undefined) return product.stock;
     if (product.quantity !== undefined) return product.quantity;
@@ -46,6 +51,23 @@ export function ProductModal({
 
   const decrementQuantity = () => {
     setQuantity(prev => (prev > 1 ? prev - 1 : 1));
+  };
+
+  const handleApplyPromo = () => {
+    if (!promoCode.trim()) {
+      setPromoStatus({ type: 'error', message: 'Введите промокод' });
+      return;
+    }
+    const promo = promos.find(p => p.code.toLowerCase() === promoCode.trim().toLowerCase());
+    if (!promo) {
+      setPromoStatus({ type: 'error', message: 'Промокод не найден' });
+      return;
+    }
+    if (promo.used >= promo.maxUses) {
+      setPromoStatus({ type: 'error', message: 'Лимит промокода исчерпан' });
+      return;
+    }
+    setPromoStatus({ type: 'success', message: 'Промокод применен' });
   };
 
   return (
@@ -169,6 +191,36 @@ export function ProductModal({
                   >
                     <Plus className="w-4 h-4" />
                   </button>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <h4 className="text-gray-700 mb-3">Промокод</h4>
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                      placeholder="Введите промокод"
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase"
+                    />
+                    <button
+                      onClick={handleApplyPromo}
+                      className="px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                    >
+                      Применить
+                    </button>
+                  </div>
+                  {promoStatus && (
+                    <div
+                      className={`text-sm ${
+                        promoStatus.type === 'success' ? 'text-green-600' : 'text-red-600'
+                      }`}
+                    >
+                      {promoStatus.message}
+                    </div>
+                  )}
                 </div>
               </div>
 
