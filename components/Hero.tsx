@@ -10,7 +10,7 @@ export function Hero({ onShopClick, onLearnClick }: HeroProps) {
     <section className="relative bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
       <div className="absolute inset-0 opacity-20">
         <ImageWithFallback 
-          src="https://images.unsplash.com/photo-1742940402380-142bb72d1b0a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3aW50ZXIlMjBsYW5kc2NhcGUlMjB5YWt1dHNrfGVufDF8fHx8MTc2NDI0ODk2Nnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+          src="https://i.ytimg.com/vi/IFkdQwkBJHg/maxresdefault.jpg?sqp=-oaymwEmCIAKENAF8quKqQMa8AEB-AH-CYAC0AWKAgwIABABGHIgRigpMA8=&rs=AOn4CLBcoi5MdBo2LNO9-BnyYwPj-z2HMw"
           alt="Yakutsk winter landscape"
           className="w-full h-full object-cover"
         />
