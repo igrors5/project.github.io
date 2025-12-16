@@ -120,12 +120,14 @@ export function AuthPage({ onLogin, onSignup, onRecoveryRequest, onBack }: AuthP
           >
             {mode === 'login' ? 'Создать аккаунт' : 'У меня уже есть аккаунт'}
           </button>
-          <button
-            onClick={handleRecovery}
-            className="text-gray-500 hover:text-indigo-600"
-          >
-            Забыли пароль?
-          </button>
+          {mode === 'login' && (
+            <button
+              onClick={handleRecovery}
+              className="text-gray-500 hover:text-indigo-600"
+            >
+              Забыли пароль?
+            </button>
+          )}
         </div>
 
         <div className="mt-4">

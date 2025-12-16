@@ -230,15 +230,17 @@ export function AuthModal({ isOpen, onClose, onLogin, onSignup, onRecoveryReques
                     ? 'Нет аккаунта? Зарегистрируйтесь'
                     : 'Уже есть аккаунт? Войдите'}
                 </button>
-                <button
-                  onClick={() => {
-                    resetForm();
-                    setMode('help');
-                  }}
-                  className="block w-full text-sm text-gray-600 hover:text-gray-800 transition"
-                >
-                  Забыли пароль или нет доступа к почте?
-                </button>
+                {mode === 'login' && (
+                  <button
+                    onClick={() => {
+                      resetForm();
+                      setMode('help');
+                    }}
+                    className="block w-full text-sm text-gray-600 hover:text-gray-800 transition"
+                  >
+                    Забыли пароль или нет доступа к почте?
+                  </button>
+                )}
               </>
             ) : (
               <button

@@ -15,6 +15,8 @@ interface CompanyData {
   description: string;
   contacts: string;
   deliveryMethod: string;
+  logo?: string;
+  sellerId?: string;
   id?: string;
   createdAt?: string;
 }
@@ -26,6 +28,7 @@ export function CompanyProfile({ isOpen, onClose, accessToken, onSave, initialDa
     description: '',
     contacts: '',
     deliveryMethod: '',
+    logo: '',
   });
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState<CompanyData[]>([]);
@@ -38,6 +41,7 @@ export function CompanyProfile({ isOpen, onClose, accessToken, onSave, initialDa
         description: '',
         contacts: '',
         deliveryMethod: '',
+        logo: '',
       });
       setIsEditing(true);
       return;
@@ -61,11 +65,52 @@ export function CompanyProfile({ isOpen, onClose, accessToken, onSave, initialDa
     }
   };
 
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Проверка типа файла
+    if (!file.type.startsWith('image/')) {
+      alert('Пожалуйста, выберите изображение');
+      return;
+    }
+
+    // Проверка размера файла (максимум 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Размер файла не должен превышать 5MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      setCompanyData({ ...companyData, logo: base64String });
+    };
+    reader.onerror = () => {
+      alert('Ошибка при чтении файла');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveLogo = () => {
+    setCompanyData({ ...companyData, logo: '' });
+  };
+
   const handleSave = async () => {
     setLoading(true);
     try {
+      // Получаем sellerId из accessToken, если его еще нет
+      let sellerId = companyData.sellerId;
+      if (!sellerId && accessToken) {
+        const session = (await import('../utils/localDB')).sessionDB.getByToken(accessToken);
+        if (session) {
+          sellerId = session.userId;
+        }
+      }
+
       const withMeta: CompanyData = {
         ...companyData,
+        sellerId: sellerId || companyData.sellerId,
         id: companyData.id || Date.now().toString(36),
         createdAt: companyData.createdAt || new Date().toISOString(),
       };
@@ -135,6 +180,56 @@ export function CompanyProfile({ isOpen, onClose, accessToken, onSave, initialDa
           </div>
 
           <div className="space-y-6">
+            <div>
+              <label className="block text-gray-700 mb-2 font-medium">Логотип компании</label>
+              {isEditing ? (
+                <div className="space-y-3">
+                  {companyData.logo ? (
+                    <div className="relative inline-block">
+                      <img
+                        src={companyData.logo}
+                        alt="Логотип"
+                        className="w-32 h-32 object-contain border border-gray-300 rounded-lg p-2 bg-white"
+                      />
+                      <button
+                        onClick={handleRemoveLogo}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition text-xs"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                      <span className="text-gray-400 text-sm text-center px-2">Нет логотипа</span>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">
+                      Загрузить логотип (JPG, PNG, до 5MB)
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {companyData.logo ? (
+                    <img
+                      src={companyData.logo}
+                      alt="Логотип компании"
+                      className="w-32 h-32 object-contain border border-gray-300 rounded-lg p-2 bg-white"
+                    />
+                  ) : (
+                    <p className="text-gray-500 italic">Логотип не загружен</p>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div>
               <label className="block text-gray-700 mb-2 font-medium">Название продавца</label>
               {isEditing ? (
@@ -221,9 +316,18 @@ export function CompanyProfile({ isOpen, onClose, accessToken, onSave, initialDa
                 {companies.map((c) => (
                   <div key={c.id || c.name} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-gray-900 font-semibold">{c.name || 'Без названия'}</p>
-                        <p className="text-xs text-gray-500">{c.createdAt ? new Date(c.createdAt).toLocaleString() : ''}</p>
+                      <div className="flex items-center gap-3">
+                        {c.logo && (
+                          <img
+                            src={c.logo}
+                            alt="Логотип"
+                            className="w-16 h-16 object-contain border border-gray-300 rounded-lg p-1 bg-white"
+                          />
+                        )}
+                        <div>
+                          <p className="text-gray-900 font-semibold">{c.name || 'Без названия'}</p>
+                          <p className="text-xs text-gray-500">{c.createdAt ? new Date(c.createdAt).toLocaleString() : ''}</p>
+                        </div>
                       </div>
                       <button
                         onClick={() => {

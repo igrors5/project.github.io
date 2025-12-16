@@ -83,6 +83,8 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedUlys, setSelectedUlys] = useState<string | null>(null);
+  const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
+  const [selectedSellerName, setSelectedSellerName] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'none'>('none');
   const [email, setEmail] = useState('');
   const [toasts, setToasts] = useState<ToastType[]>([]);
@@ -593,6 +595,8 @@ export default function App() {
   const handleResetFilters = () => {
     setSelectedCategory(null);
     setSelectedUlys(null);
+    setSelectedSellerId(null);
+    setSelectedSellerName(null);
     setSortBy('none');
   };
 
@@ -641,6 +645,22 @@ export default function App() {
           onAddProfile={() => handleOpenCompanyProfile('add')}
           onEditProfile={() => handleOpenCompanyProfile('edit')}
           isSeller={isSeller}
+          onSellerClick={(sellerName: string) => {
+            // Находим sellerId по имени компании
+            const companies = JSON.parse(localStorage.getItem('companyProfiles') || '[]');
+            const company = companies.find((c: any) => c.name === sellerName);
+            if (company && company.sellerId) {
+              setSelectedSellerId(company.sellerId);
+              setSelectedSellerName(sellerName);
+              setCompanyPrevPage('company');
+              setCurrentPage('products');
+            } else {
+              setSelectedSellerId(null);
+              setSelectedSellerName(sellerName);
+              setCompanyPrevPage('company');
+              setCurrentPage('products');
+            }
+          }}
         />
         {isSeller && (
           <CompanyProfile
@@ -756,7 +776,7 @@ export default function App() {
       
       {currentPage === 'products' ? (
         <ProductsPage
-          products={allProducts.filter(p => !p.hidden)}
+          products={allProducts.filter(p => !p.hidden && (!selectedSellerId || p.sellerId === selectedSellerId))}
           categories={availableCategories}
           uluses={allUluses}
           selectedCategory={selectedCategory}
@@ -769,12 +789,25 @@ export default function App() {
           onCategoryChange={setSelectedCategory}
           onUlysChange={setSelectedUlys}
           onSortChange={setSortBy}
-          onResetFilters={handleResetFilters}
+          onResetFilters={() => {
+            setSelectedCategory(null);
+            setSelectedUlys(null);
+            setSelectedSellerId(null);
+            setSelectedSellerName(null);
+            setSortBy('none');
+          }}
+          selectedSellerName={selectedSellerName}
           onAddToCart={addToCart}
           onToggleWishlist={toggleWishlist}
           onProductClick={handleProductClick}
           onBack={() => {
-            setCurrentPage('home');
+            if (selectedSellerId) {
+              setCurrentPage('company');
+              setSelectedSellerId(null);
+              setSelectedSellerName(null);
+            } else {
+              setCurrentPage('home');
+            }
             setSelectedCategory(null);
             setSelectedUlys(null);
             setSortBy('none');
@@ -938,7 +971,7 @@ export default function App() {
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-        products={allProducts.filter(p => !p.hidden)}
+          products={allProducts.filter(p => !p.hidden && (!selectedSellerId || p.sellerId === selectedSellerId))}
         onAddToCart={addToCart}
         onProductClick={handleProductClick}
       />

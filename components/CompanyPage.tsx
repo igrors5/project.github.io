@@ -6,6 +6,7 @@ interface CompanyPageProps {
   onAddProfile: () => void;
   onEditProfile: () => void;
   isSeller?: boolean;
+  onSellerClick?: (sellerName: string) => void;
 }
 
 interface CompanyData {
@@ -14,10 +15,12 @@ interface CompanyData {
   description: string;
   contacts: string;
   deliveryMethod: string;
+  logo?: string;
+  sellerId?: string;
   createdAt?: string;
 }
 
-export function CompanyPage({ onBack, onAddProfile, onEditProfile, isSeller }: CompanyPageProps) {
+export function CompanyPage({ onBack, onAddProfile, onEditProfile, isSeller, onSellerClick }: CompanyPageProps) {
   const [companies, setCompanies] = useState<CompanyData[]>([]);
   const handleBack = () => {
     onBack();
@@ -87,18 +90,36 @@ export function CompanyPage({ onBack, onAddProfile, onEditProfile, isSeller }: C
           ) : (
             <div className="space-y-3">
               {companies.map((c) => (
-                <div key={c.id || c.name} className="border border-gray-200 rounded-lg p-4">
+                <div 
+                  key={c.id || c.name} 
+                  className={`border border-gray-200 rounded-lg p-4 ${onSellerClick ? 'cursor-pointer hover:border-indigo-400 hover:shadow-md transition' : ''}`}
+                  onClick={() => onSellerClick && onSellerClick(c.name)}
+                >
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-900 font-semibold">{c.name || 'Без названия'}</p>
-                      <p className="text-xs text-gray-500">
-                        {c.createdAt ? new Date(c.createdAt).toLocaleString() : 'Дата не указана'}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      {c.logo && (
+                        <img
+                          src={c.logo}
+                          alt="Логотип"
+                          className="w-16 h-16 object-contain border border-gray-300 rounded-lg p-1 bg-white"
+                        />
+                      )}
+                      <div>
+                        <p className="text-gray-900 font-semibold">{c.name || 'Без названия'}</p>
+                        <p className="text-xs text-gray-500">
+                          {c.createdAt ? new Date(c.createdAt).toLocaleString() : 'Дата не указана'}
+                        </p>
+                      </div>
                     </div>
                   </div>
                   {c.description && <p className="text-gray-700 text-sm mt-2">{c.description}</p>}
                   {c.contacts && <p className="text-gray-600 text-sm mt-1">Контакты: {c.contacts}</p>}
                   {c.deliveryMethod && <p className="text-gray-600 text-sm mt-1">Доставка: {c.deliveryMethod}</p>}
+                  {onSellerClick && (
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <p className="text-sm text-indigo-600 font-medium">Нажмите, чтобы посмотреть товары →</p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

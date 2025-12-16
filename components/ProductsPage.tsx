@@ -16,6 +16,7 @@ interface ProductsPageProps {
   cartCount: number;
   user: { name: string; email: string } | null;
   isSeller?: boolean;
+  selectedSellerName?: string | null;
   onCategoryChange: (category: string | null) => void;
   onUlysChange: (ulys: string | null) => void;
   onSortChange: (sort: 'newest' | 'oldest' | 'none') => void;
@@ -45,6 +46,7 @@ export function ProductsPage({
   cartCount,
   user,
   isSeller,
+  selectedSellerName,
   onCategoryChange,
   onUlysChange,
   onSortChange,
@@ -196,10 +198,14 @@ export function ProductsPage({
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Вернуться на главную
+            {selectedSellerName ? 'Вернуться к продавцам' : 'Вернуться на главную'}
           </button>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {selectedCategory ? selectedCategory : 'Все товары'}
+            {selectedSellerName 
+              ? `Товары продавца: ${selectedSellerName}`
+              : selectedCategory 
+              ? selectedCategory 
+              : 'Все товары'}
           </h1>
           <p className="text-gray-600">
             Найдено {filteredProducts.length} {filteredProducts.length === 1 ? 'товар' : filteredProducts.length < 5 ? 'товара' : 'товаров'}
