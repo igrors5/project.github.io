@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, FormEvent, ChangeEvent } from 'react';
 import { X } from './Icons';
 
 interface AddProductModalProps {
@@ -79,7 +79,7 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSubmit({
       name,
@@ -136,7 +136,7 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 required
               />
@@ -147,7 +147,7 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
               <input
                 type="number"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setPrice(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 required
                 min="0"
@@ -161,7 +161,7 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
                 <input
                   type="number"
                   value={stock}
-                  onChange={(e) => setStock(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setStock(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   required
                   min="0"
@@ -173,7 +173,7 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
                 <input
                   type="number"
                   value={discountPercent}
-                  onChange={(e) => setDiscountPercent(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setDiscountPercent(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   min="0"
                   max="90"
@@ -188,7 +188,7 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
               <input
                 type="url"
                 value={image}
-                onChange={(e) => setImage(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setImage(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="https://example.com/image.jpg"
               />
@@ -198,7 +198,7 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
               <label className="block text-gray-700 mb-2">Категория *</label>
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => setCategory(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 required
               >
@@ -215,7 +215,7 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
               <input
                 type="number"
                 value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setQuantity(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 required
                 min="0"
@@ -226,7 +226,7 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
               <label className="block text-gray-700 mb-2">Описание</label>
               <textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                 rows={4}
                 placeholder="Расскажите о вашем товаре..."
@@ -237,7 +237,7 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
               <label className="block text-gray-700 mb-2">Характеристики (каждая с новой строки)</label>
               <textarea
                 value={characteristics}
-                onChange={(e) => {
+                onChange={(e: ChangeEvent<HTMLTextAreaElement>) => {
                   setCharacteristics(e.target.value);
                   setFeatures(e.target.value);
                 }}
@@ -252,7 +252,7 @@ export function AddProductModal({ isOpen, onClose, onSubmit }: AddProductModalPr
               <label className="block text-gray-700 mb-2">Улус</label>
               <select
                 value={ulys}
-                onChange={(e) => setUlys(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => setUlys(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">Выберите улус</option>
