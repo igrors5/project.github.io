@@ -8,9 +8,13 @@ declare global {
   };
 }
 
+// @ts-ignore - Deno npm: imports are valid in Deno runtime
 import { Hono } from "npm:hono";
+// @ts-ignore - Deno npm: imports are valid in Deno runtime
 import { cors } from "npm:hono/cors";
+// @ts-ignore - Deno npm: imports are valid in Deno runtime
 import { logger } from "npm:hono/logger";
+// @ts-ignore - Deno npm: imports are valid in Deno runtime
 import { createClient } from "npm:@supabase/supabase-js";
 import * as kv from "./kv_store.tsx";
 
