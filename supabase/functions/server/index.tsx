@@ -1,8 +1,19 @@
+// Deno types declaration for TypeScript
+declare global {
+  const Deno: {
+    env: {
+      get(key: string): string | undefined;
+    };
+    serve: (handler: (req: Request) => Response | Promise<Response>) => void;
+  };
+}
+
 import { Hono } from "npm:hono";
 import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
 import { createClient } from "npm:@supabase/supabase-js";
 import * as kv from "./kv_store.tsx";
+
 const app = new Hono();
 
 const supabase = createClient(
@@ -251,8 +262,7 @@ app.get("/make-server-65112a46/products", async (c) => {
   try {
     const productKeys = await kv.getByPrefix('product:');
     const products = productKeys
-      .map(item => item.value)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return c.json({
       success: true,
@@ -280,7 +290,7 @@ app.get("/make-server-65112a46/seller/products", async (c) => {
     }
 
     const productIds = await kv.get(`seller:${user.id}:products`) || [];
-    const products = [];
+    const products: any[] = [];
 
     for (const id of productIds) {
       const product = await kv.get(`product:${id}`);
@@ -291,7 +301,7 @@ app.get("/make-server-65112a46/seller/products", async (c) => {
 
     return c.json({
       success: true,
-      products: products.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+      products: products.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
     });
   } catch (error) {
     console.error('Error fetching seller products:', error);
