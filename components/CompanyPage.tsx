@@ -60,7 +60,7 @@ export function CompanyPage({ onBack, onAddProfile, onEditProfile, isSeller, onS
               <ArrowLeft className="w-5 h-5" />
               Назад
             </button>
-            <h2 className="text-xl font-semibold text-gray-900">Продавцы</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Производители</h2>
           </div>
           {isSeller && (
             <div className="flex items-center gap-2">
@@ -84,7 +84,7 @@ export function CompanyPage({ onBack, onAddProfile, onEditProfile, isSeller, onS
         </div>
 
         <div className="bg-white shadow rounded-xl p-4">
-          <h3 className="text-gray-800 mb-3">Все продавцы ({companies.length})</h3>
+          <h3 className="text-gray-800 mb-3">Все производители ({companies.length})</h3>
           {companies.length === 0 ? (
             <div className="text-gray-600 text-sm">Пока нет сохраненных продавцов.</div>
           ) : (

@@ -309,7 +309,7 @@ app.get("/make-server-65112a46/seller/products", async (c) => {
     });
   } catch (error) {
     console.error('Error fetching seller products:', error);
-    return c.json({ error: 'Ошибка получения товаров продавца' }, 500);
+    return c.json({ error: 'Ошибка получения товаров производителя' }, 500);
   }
 });
 

@@ -45,7 +45,7 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
                 onClick={onCompanyListClick}
                 className="text-gray-700 hover:text-indigo-600 transition"
               >
-                Продавцы
+                Производители
               </button>
             )}
           </nav>
@@ -102,7 +102,7 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
                         }}
                         className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
                       >
-                        Панель продавца
+                        Панель производителя
                       </button>
                     )}
                     {isSeller && onExitSeller && (
@@ -113,7 +113,7 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
                         }}
                         className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
                       >
-                        Выйти из роли продавца
+                        Выйти из роли производителя
                       </button>
                     )}
                     {!isAdmin && onMakeAdmin && (
@@ -186,7 +186,7 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
                   }}
                   className="text-left text-gray-700 hover:text-indigo-600 transition"
                 >
-                  Продавцы
+                  Производители
                 </button>
               )}
               <div className="flex items-center space-x-4 pt-4 border-t">
@@ -229,7 +229,7 @@ export function Header({ cartCount, onCartClick, onSearchClick, user, onAuthClic
                         }}
                         className="text-left text-gray-700 hover:text-indigo-600 transition"
                       >
-                        Выйти из роли продавца
+                        Выйти из роли производителя
                       </button>
                     )}
                     {onLogout && (

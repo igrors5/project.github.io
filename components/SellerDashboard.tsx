@@ -86,7 +86,7 @@ export function SellerDashboard({
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-gray-900">Панель продавца</h2>
+            <h2 className="text-gray-900">Панель производителя</h2>
             <p className="text-sm text-gray-500">Управление товарами, компанией и промокодами</p>
           </div>
           <div className="flex items-center gap-3">
@@ -95,7 +95,7 @@ export function SellerDashboard({
                 onClick={onExitSeller}
                 className="text-gray-600 hover:text-gray-900 transition px-3 py-2 rounded-lg border border-gray-200"
               >
-                Выйти из роли продавца
+                Выйти из роли производителя
               </button>
             )}
             <button
@@ -132,7 +132,7 @@ export function SellerDashboard({
         </div>
 
         <div className="mb-8">
-          <h3 className="text-gray-800 mb-3">Продажи по товарам</h3>
+          <h3 className="text-gray-800 mb-3">Продажи по дням</h3>
           {salesData.length === 0 ? (
             <div className="bg-gray-50 rounded-lg p-4 text-gray-600 text-sm">Нет данных по продажам.</div>
           ) : (
@@ -140,7 +140,7 @@ export function SellerDashboard({
               id="sales-chart"
               config={{
                 sales: {
-                  label: 'Продажи',
+                  label: 'Продажи (₽)',
                   color: 'hsl(234, 83%, 60%)',
                 },
               }}
@@ -148,8 +148,15 @@ export function SellerDashboard({
             >
               <BarChart data={salesData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fontSize: 12 }} 
+                  label={{ value: 'Дата', position: 'insideBottom', offset: -5 }}
+                />
+                <ChartTooltip 
+                  content={<ChartTooltipContent hideLabel />}
+                  formatter={(value: number) => [`${value.toLocaleString()} ₽`, 'Продажи']}
+                />
                 <ChartLegend />
                 <Bar dataKey="sales" fill="var(--color-sales)" radius={[6, 6, 0, 0]} />
               </BarChart>
@@ -185,7 +192,7 @@ export function SellerDashboard({
 
         {onCreatePromo && (
           <div className="mb-10">
-            <h3 className="text-gray-800 mb-3">Промокоды (панель продавца)</h3>
+            <h3 className="text-gray-800 mb-3">Промокоды (панель производителя)</h3>
             <form
               className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4"
               onSubmit={(e) => {
@@ -370,6 +377,20 @@ export function SellerDashboard({
                     stock: Number(editForm.stock),
                     discountPercent: Number(editForm.discountPercent),
                     features: editForm.features,
+                  });
+                  // Скрываем форму после сохранения
+                  setEditProductId(null);
+                  // Очищаем форму
+                  setEditForm({
+                    name: '',
+                    price: '',
+                    image: '',
+                    category: '',
+                    description: '',
+                    ulys: '',
+                    stock: '',
+                    discountPercent: '',
+                    features: '',
                   });
                 }}
               >

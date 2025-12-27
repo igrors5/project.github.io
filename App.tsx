@@ -4,7 +4,7 @@ import { ProductCard } from './components/ProductCard';
 import { Footer } from './components/Footer';
 import { CartSidebar } from './components/CartSidebar';
 import { SearchModal } from './components/SearchModal';
-import { ProductModal } from './components/ProductModal';
+import { ProductPage } from './components/ProductPage';
 import { ToastContainer } from './components/Toast';
 import { AuthModal } from './components/AuthModal';
 import { AddProductModal } from './components/AddProductModal';
@@ -58,6 +58,18 @@ interface CartItem {
   image: string;
   quantity: number;
   discountPercent?: number;
+  sellerId?: string;
+}
+
+interface Sale {
+  id: string;
+  productId: number;
+  productName: string;
+  price: number;
+  quantity: number;
+  sellerId: string;
+  date: string; // ISO date string
+  total: number;
 }
 
 interface ToastType {
@@ -75,7 +87,7 @@ interface User {
 let toastIdCounter = 0;
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'products' | 'auth' | 'seller' | 'company' | 'about'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'products' | 'auth' | 'seller' | 'company' | 'about' | 'product'>('home');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -99,6 +111,7 @@ export default function App() {
   const [isSeller, setIsSeller] = useState(false);
   const [companyPrevPage, setCompanyPrevPage] = useState<'home' | 'products' | 'seller' | 'auth'>('home');
   const [companyProfileMode, setCompanyProfileMode] = useState<'add' | 'edit'>('edit');
+  const [prevPageBeforeAuth, setPrevPageBeforeAuth] = useState<'home' | 'products' | 'seller' | 'company' | 'about'>('home');
 
   // Restore seller role flag
   useEffect(() => {
@@ -177,6 +190,10 @@ export default function App() {
   };
 
   const goToAuthPage = () => {
+    // Сохраняем текущую страницу перед переходом на страницу регистрации
+    if (currentPage !== 'auth') {
+      setPrevPageBeforeAuth(currentPage);
+    }
     setCurrentPage('auth');
     setIsAuthModalOpen(false);
   };
@@ -211,6 +228,10 @@ export default function App() {
         setUser(profileData.user);
         toast.success(`Добро пожаловать, ${profileData.user.name}!`);
         setIsAuthModalOpen(false);
+        // Возвращаемся на предыдущую страницу после входа, если мы на странице auth
+        if (currentPage === 'auth') {
+          setCurrentPage(prevPageBeforeAuth);
+        }
       }
     }
   };
@@ -224,8 +245,8 @@ export default function App() {
 
     if (response.success) {
       toast.success('Регистрация успешна! Теперь войдите в систему');
-      // Auto login after signup
-      handleLogin(email, password);
+      // Auto login after signup - handleLogin вернет на предыдущую страницу
+      await handleLogin(email, password);
     }
   };
 
@@ -255,6 +276,17 @@ export default function App() {
   }) => {
     if (!accessToken) {
       toast.error('Необходимо войти в систему');
+      return;
+    }
+
+    // Проверка наличия компании
+    const companies = JSON.parse(localStorage.getItem('companyProfiles') || '[]');
+    const userCompany = companies.find((c: any) => c.sellerId === user?.id);
+    if (!userCompany) {
+      toast.error('Сначала необходимо добавить информацию о компании');
+      setIsAddProductModalOpen(false);
+      setIsCompanyProfileOpen(true);
+      setCompanyProfileMode('add');
       return;
     }
 
@@ -366,6 +398,7 @@ export default function App() {
           image: product.image,
           quantity: initialQty,
           discountPercent: product.discountPercent,
+          sellerId: product.sellerId,
         },
       ];
     });
@@ -404,7 +437,26 @@ export default function App() {
   };
 
   const handleProductClick = (product: Product) => {
+    // Сохраняем текущую страницу перед переходом на страницу товара
+    if (currentPage !== 'product') {
+      setPrevPageBeforeAuth(currentPage);
+    }
     setSelectedProduct(product);
+    setCurrentPage('product');
+  };
+
+  const getCompanyInfo = (sellerId?: string) => {
+    if (!sellerId) return null;
+    const companies = JSON.parse(localStorage.getItem('companyProfiles') || '[]');
+    const company = companies.find((c: any) => c.sellerId === sellerId);
+    if (!company) return null;
+    return {
+      name: company.name,
+      description: company.description,
+      contacts: company.contacts,
+      deliveryMethod: company.deliveryMethod,
+      logo: company.logo,
+    };
   };
 
   const handleModalAddToCart = (quantity: number) => {
@@ -430,9 +482,47 @@ export default function App() {
     toast.info('Функция оформления заказа будет доступна в ближайшее время!');
     setTimeout(() => {
       const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      
+      // Сохраняем продажи
+      const sales: Sale[] = cartItems
+        .filter(item => item.sellerId) // Только товары с sellerId
+        .map(item => ({
+          id: `${Date.now()}-${item.id}-${Math.random()}`,
+          productId: item.id,
+          productName: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          sellerId: item.sellerId!,
+          date: new Date().toISOString(),
+          total: item.price * item.quantity,
+        }));
+
+      // Сохраняем продажи в localStorage
+      const existingSales = JSON.parse(localStorage.getItem('sales') || '[]');
+      const updatedSales = [...existingSales, ...sales];
+      localStorage.setItem('sales', JSON.stringify(updatedSales));
+
+      // Обновляем количество проданных товаров
+      sales.forEach(sale => {
+        const product = allProducts.find(p => p.id === sale.productId);
+        if (product) {
+          const currentSold = product.sold || 0;
+          product.sold = currentSold + sale.quantity;
+          // Обновляем в localStorage
+          const products = JSON.parse(localStorage.getItem('marketplace_products') || '[]');
+          const productIndex = products.findIndex((p: Product) => p.id === sale.productId);
+          if (productIndex !== -1) {
+            products[productIndex].sold = product.sold;
+            localStorage.setItem('marketplace_products', JSON.stringify(products));
+          }
+        }
+      });
+
       toast.success(`Ваш заказ на сумму ${total.toLocaleString()} ₽ принят!`);
       setCartItems([]);
       setIsCartOpen(false);
+      loadProducts(); // Обновляем список товаров
+      setSalesUpdateTrigger(prev => prev + 1); // Обновляем график продаж
     }, 1500);
   };
 
@@ -465,7 +555,7 @@ export default function App() {
   const handleMakeSeller = () => {
     setIsSeller(true);
     localStorage.setItem(SELLER_ROLE_KEY, 'true');
-    toast.success('Режим продавца включен');
+    toast.success('Режим производителя включен');
   };
 
   const openCompanyPage = () => {
@@ -475,7 +565,7 @@ export default function App() {
 
   const handleOpenCompanyProfile = (mode: 'add' | 'edit' = 'edit') => {
     if (!isSeller) {
-      toast.error('Профиль продавца доступен только для продавцов');
+      toast.error('Профиль производителя доступен только для производителей');
       return;
     }
     setCompanyProfileMode(mode);
@@ -488,7 +578,7 @@ export default function App() {
     if (currentPage === 'seller') {
       setCurrentPage('home');
     }
-    toast.info('Режим продавца выключен');
+    toast.info('Режим производителя выключен');
   };
 
   const handleCreatePromo = async (data: { code: string; maxUses: number }) => {
@@ -505,14 +595,46 @@ export default function App() {
     }
   };
 
-  const salesData = useMemo(
-    () =>
-      sellerProducts.map((p) => ({
-        name: p.name,
-        sales: (p.price % 7) + 3, // простая демонстрация статистики
-      })),
-    [sellerProducts],
-  );
+  const [salesUpdateTrigger, setSalesUpdateTrigger] = useState(0);
+
+  const salesData = useMemo(() => {
+    if (!user?.id) return [];
+    
+    // Получаем все продажи из localStorage
+    const allSales: Sale[] = JSON.parse(localStorage.getItem('sales') || '[]');
+    
+    // Фильтруем продажи текущего производителя
+    const sellerSales = allSales.filter(sale => sale.sellerId === user.id);
+    
+    if (sellerSales.length === 0) return [];
+    
+    // Группируем продажи по дням
+    const salesByDay: { [key: string]: { total: number; date: Date } } = {};
+    
+    sellerSales.forEach(sale => {
+      const date = new Date(sale.date);
+      const dayKey = date.toISOString().split('T')[0]; // YYYY-MM-DD формат для правильной сортировки
+      
+      if (!salesByDay[dayKey]) {
+        salesByDay[dayKey] = { total: 0, date };
+      }
+      salesByDay[dayKey].total += sale.total;
+    });
+    
+    // Сортируем по дате и берем последние 7 дней
+    const sortedDays = Object.keys(salesByDay)
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+      .slice(-7); // Последние 7 дней
+    
+    return sortedDays.map(day => {
+      const date = new Date(day);
+      const formattedDay = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+      return {
+        name: formattedDay,
+        sales: Math.round(salesByDay[day].total),
+      };
+    });
+  }, [sellerProducts, user?.id, salesUpdateTrigger]);
 
   const popularProducts = useMemo(() => {
     const visible = allProducts.filter(p => !p.hidden);
@@ -538,7 +660,7 @@ export default function App() {
       return;
     }
     if (!isSeller) {
-      // Для не-продавца показываем главную с привычным меню
+      // Для не-производителя показываем главную с привычным меню
       setCurrentPage('home');
       return;
     }
@@ -622,12 +744,34 @@ export default function App() {
     });
   }
 
+  if (currentPage === 'product' && selectedProduct) {
+    const companyInfo = getCompanyInfo(selectedProduct.sellerId);
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <ToastContainer toasts={toasts} onRemove={removeToast} />
+        <ProductPage
+          product={selectedProduct}
+          onBack={() => {
+            const pageToReturn = prevPageBeforeAuth === 'product' || prevPageBeforeAuth === 'home' ? 'products' : prevPageBeforeAuth;
+            setCurrentPage(pageToReturn);
+            setSelectedProduct(null);
+          }}
+          onAddToCart={handleModalAddToCart}
+          onToggleWishlist={() => toggleWishlist(selectedProduct.id)}
+          isInWishlist={wishlist.includes(selectedProduct.id)}
+          promos={promos}
+          companyInfo={companyInfo}
+        />
+      </div>
+    );
+  }
+
   if (currentPage === 'auth') {
     return (
       <div className="min-h-screen bg-gray-50">
         <ToastContainer toasts={toasts} onRemove={removeToast} />
         <AuthPage
-          onBack={() => setCurrentPage('home')}
+          onBack={() => setCurrentPage(prevPageBeforeAuth)}
           onLogin={handleLogin}
           onSignup={handleSignup}
           onRecoveryRequest={handleRecoveryRequest}
@@ -694,7 +838,7 @@ export default function App() {
             <h1 className="text-3xl font-bold text-gray-900 mb-4">О нас</h1>
             <p className="text-gray-700 leading-relaxed">
               Мы объединяем продавцов локальных товаров и покупателей, предоставляя простой способ найти уникальные изделия,
-              а также инструменты для управления товарами, скидками и профилем продавца.
+              а также инструменты для управления товарами, скидками и профилем производителя.
             </p>
             <p className="text-gray-700 leading-relaxed mt-4">
               Наш сервис помогает развивать локальные бренды, поддерживает прозрачность и делает покупки удобными для
@@ -717,7 +861,6 @@ export default function App() {
           onClose={() => setCurrentPage('home')}
           products={sellerProducts}
           onAddProduct={() => {
-            setCurrentPage('home');
             setIsAddProductModalOpen(true);
           }}
           onCompanyProfile={() => {
@@ -975,18 +1118,6 @@ export default function App() {
         onAddToCart={addToCart}
         onProductClick={handleProductClick}
       />
-
-      {selectedProduct && (
-        <ProductModal
-          isOpen={!!selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-          product={selectedProduct}
-          onAddToCart={handleModalAddToCart}
-          onToggleWishlist={() => toggleWishlist(selectedProduct.id)}
-          isInWishlist={wishlist.includes(selectedProduct.id)}
-          promos={promos}
-        />
-      )}
 
       <AuthModal
         isOpen={isAuthModalOpen}
